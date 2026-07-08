@@ -102,4 +102,4 @@ h1,h2,h3,h4,.cat-title,.entry-text span,.quick span{font-weight:400!important}
 .cat-progress-line em{font-style:normal;color:#27415f;white-space:nowrap}
 .cat-progress-track{height:8px;border-radius:999px;background:#e9eff7;overflow:hidden;margin-top:6px}
 .cat-progress-track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#5f42d9,#60a5fa)}
-@media(max-width:560px){.quick-grid-v292{grid-template-columns:1fr 1fr}.quick-grid-v292 .q4{grid-column:1 / -1}.cat-progress-line{display:block}.cat-progress-line em{display:block;margin-top:2px}}
+@media(max-width:560px){.quick-grid-v292{grid-template-columns:repeat(3,1fr)}.quick-grid-v292 .q4{grid-column:auto}.cat-progress-line{display:block}.cat-progress-line em{display:block;margin-top:2px}}
