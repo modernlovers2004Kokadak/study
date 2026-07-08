@@ -22,10 +22,9 @@
   <section class="content">
     <section class="hero-card" id="hero-card"></section>
 
-    <section class="quick-grid">
-      <a class="quick q1" href="過去問/index.html"><span class="quick-icon"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M12 16c8-4 15-3 20 2v32c-5-5-12-6-20-2V16z"/><path d="M52 16c-8-4-15-3-20 2v32c5-5 12-6 20-2V16z"/></svg></span><span>今日の学習</span><small>18問</small></a>
-      <a class="quick q2" href="過去問/index.html#review"><span class="quick-icon"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M48 24a18 18 0 0 0-30-8l-5 5" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M13 11v10h10" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 40a18 18 0 0 0 30 8l5-5" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M51 53V43H41" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>今日の復習</span><small id="due-mini">0問</small></a>
-      <a class="quick q3" href="過去問/index.html#mistakes"><span class="quick-icon"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 10h24a4 4 0 0 1 4 4v42L32 46 16 56V14a4 4 0 0 1 4-4z"/><path d="M34 18l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6z" opacity=".35"/></svg></span><span>間違い復習</span><small id="mistake-mini">0問</small></a>
+    <section class="quick-grid quick-grid-v292">
+      <a class="quick q1" href="過去問/index.html"><span class="quick-icon"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M12 16c8-4 15-3 20 2v32c-5-5-12-6-20-2V16z"/><path d="M52 16c-8-4-15-3-20 2v32c5-5 12-6 20-2V16z"/></svg></span><span>今日の学習</span><small>21問</small></a>
+      <a class="quick q3" href="過去問/index.html#mistakes"><span class="quick-icon"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 10h24a4 4 0 0 1 4 4v42L32 46 16 56V14a4 4 0 0 1 4-4z"/><path d="M34 18l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6z" opacity=".35"/></svg></span><span>🔖 要復習</span><small id="review-mini">0問</small></a>
       <a class="quick q4" href="過去問/index.html#mock"><span class="quick-icon"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 12h20v10a10 10 0 0 1-20 0V12z" fill="none" stroke="currentColor" stroke-width="6"/><path d="M22 18H12v5a12 12 0 0 0 12 12M42 18h10v5a12 12 0 0 1-12 12" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M32 32v12M24 52h16M20 56h24" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M32 17l2 4 4 .6-3 3 .7 4.4-3.7-2-3.7 2 .7-4.4-3-3 4-.6 2-4z"/></svg></span><span>模試</span><small>55問</small></a>
     </section>
 
@@ -34,7 +33,6 @@
       <a class="entry-card quiz" href="過去問/index.html"><span class="entry-ico"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 10h24a5 5 0 0 1 5 5v39a5 5 0 0 1-5 5H20a5 5 0 0 1-5-5V15a5 5 0 0 1 5-5z"/><path d="M24 22h16M24 33h16M24 44h10" fill="none" stroke="#ff9a36" stroke-width="5" stroke-linecap="round"/></svg></span><span class="entry-text"><span>問題集</span><small>過去問で演習する</small></span><span class="arrow">›</span></a>
     </section>
 
-    <section class="progress-card" id="progress-card"></section>
     <section class="category-card-list" id="category-card-list"></section>
     <section class="weak-card" id="weak-card"></section>
   </section>
@@ -44,7 +42,7 @@
 <script>
 const PREFIX='riyo_v05_';
 const store={get:k=>JSON.parse(localStorage.getItem(PREFIX+k)||'null')};
-function baseProg(){return{done:{},history:[],mistakes:{},themeStats:{},catStats:{},daily:{},recentIds:[],recentThemes:[],settings:{todayCount:21,recentBlock:30,masterNeed:2}}}
+function baseProg(){return{done:{},answerStats:{},history:[],mistakes:{},themeStats:{},catStats:{},daily:{},recentIds:[],recentThemes:[],settings:{todayCount:21,recentBlock:30,masterNeed:2}}}
 function prog(){return {...baseProg(),...(store.get('prog')||{})}}
 function pct(n,d){return d?Math.round(n/d*100):0}
 function today(){return new Date().toISOString().slice(0,10)}
@@ -69,23 +67,24 @@ function weaknessRows(p){
     .slice(0,3);
   return rows;
 }
+
+function solvedIds(p){return new Set(Object.entries(p.answerStats||{}).filter(([id,s])=>s&&s.ok>0).map(([id])=>Number(id)))}
+function solvedCountByCat(p,catId){const solved=solvedIds(p);return catQuestions(catId).filter(q=>solved.has(q.id)).length}
+function categoryProgressHtml(c,i,p){const total=catQuestions(c.id).length,done=solvedCountByCat(p,c.id),rate=pct(done,total);return `<div class="cat-progress"><div class="cat-progress-line"><span>${i+1} ${c.name}</span><em>${rate}%　${done} / ${total} 問 完了</em></div><div class="cat-progress-track"><i style="width:${rate}%"></i></div></div>`}
+
 function renderProgress(){
   const p=prog();
   const done=Object.keys(p.done||{}).length;
   const h=p.history||[];
   const ok=h.filter(x=>x.ok).length;
-  const wrong=Object.values(p.mistakes||{}).filter(m=>!m.mastered).length;
-  const due=Object.values(p.mistakes||{}).filter(m=>!m.mastered && (!m.nextReview || m.nextReview<=today())).length;
+  const reviewCount=Object.values(p.mistakes||{}).length;
   const week=lastNDays(7).reduce((a,d)=>a+(p.daily?.[d]?.try||0),0);
   const total=QUESTIONS.length;
   const donePct=pct(done,total);
   const correctPct=pct(ok,h.length);
   const target=Math.ceil(total*.8);
   const remain=Math.max(0,target-done);
-  const mastered=Object.values(p.mistakes||{}).filter(m=>m.mastered).length;
-  const masterPct=pct(mastered,total);
-  document.getElementById('due-mini').textContent=due+'問';
-  document.getElementById('mistake-mini').textContent=wrong+'問';
+  document.getElementById('review-mini').textContent=reviewCount+'問';
   document.getElementById('hero-card').innerHTML=`
     <div class="ring big" style="--p:${donePct}"><span>${donePct}%</span><small>完了率</small></div>
     <div class="hero-info">
@@ -94,17 +93,11 @@ function renderProgress(){
       <div class="bar"><i style="width:${donePct}%"></i></div>
       <div class="hero-numbers"><div>学習済み<br><span>${done}問</span></div><div>全体<br><span>${total}問</span></div></div>
     </div>`;
-  document.getElementById('progress-card').innerHTML=`
-    <div class="progress-bars">
-      <div class="progress-bar-item"><div class="progress-bar-label"><span>問題進捗</span><em>${done} / ${total}</em></div><div class="progress-track"><i class="bar-blue" style="width:${donePct}%"></i></div></div>
-      <div class="progress-bar-item"><div class="progress-bar-label"><span>完全克服</span><em>${mastered} / ${total}</em></div><div class="progress-track"><i class="bar-green" style="width:${masterPct}%"></i></div></div>
-      <div class="progress-bar-item"><div class="progress-bar-label"><span>正答率</span><em>${correctPct}%</em></div><div class="progress-track"><i class="bar-orange" style="width:${correctPct}%"></i></div></div>
-    </div>`;
   const palette=['#4f46e5','#4f46e5','#4f46e5','#4f46e5','#4f46e5','#4f46e5','#4f46e5','#06b6d4','#06b6d4','#ec4899','#a855f7','#22c55e','#eab308','#a47764','#36537f'];
   document.getElementById('category-card-list').innerHTML=CATEGORIES.map((c,i)=>{
     return `<a class="category-card-row category-quiz-row" href="過去問/index.html#cat=${encodeURIComponent(c.id)}" aria-label="${c.name}の問題">
       <span class="cat-num" style="background:${palette[i]||'#4f46e5'}">${i+1}</span>
-      <span class="cat-body"><span class="cat-title">${c.name}</span></span>
+      <span class="cat-body"><span class="cat-title">${c.name}</span>${categoryProgressHtml(c,i,p)}</span>
       <span class="cat-action">問題 ›</span>
     </a>`
   }).join('');

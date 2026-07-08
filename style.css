@@ -92,3 +92,14 @@ b,strong{font-weight:400!important}
 @media(max-width:560px){.category-quiz-row{min-height:66px;grid-template-columns:50px minmax(0,1fr) auto;gap:10px;padding:10px 12px}.category-quiz-row .cat-title{font-size:17px}.category-quiz-row .cat-action{min-width:64px;padding:7px 10px;font-size:13px}}
 
 h1,h2,h3,h4,.cat-title,.entry-text span,.quick span{font-weight:400!important}
+
+
+/* v2.9.2：トップページカテゴリ別達成率 */
+.quick-grid-v292{grid-template-columns:repeat(3,1fr)}
+.category-card-row .cat-body{min-width:0;flex:1}
+.cat-progress{margin-top:8px;width:100%}
+.cat-progress-line{display:flex;justify-content:space-between;gap:10px;align-items:center;color:#536580;font-size:13px;line-height:1.45}
+.cat-progress-line em{font-style:normal;color:#27415f;white-space:nowrap}
+.cat-progress-track{height:8px;border-radius:999px;background:#e9eff7;overflow:hidden;margin-top:6px}
+.cat-progress-track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#5f42d9,#60a5fa)}
+@media(max-width:560px){.quick-grid-v292{grid-template-columns:1fr 1fr}.quick-grid-v292 .q4{grid-column:1 / -1}.cat-progress-line{display:block}.cat-progress-line em{display:block;margin-top:2px}}
