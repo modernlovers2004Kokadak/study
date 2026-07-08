@@ -103,3 +103,50 @@ h1,h2,h3,h4,.cat-title,.entry-text span,.quick span{font-weight:400!important}
 .cat-progress-track{height:8px;border-radius:999px;background:#e9eff7;overflow:hidden;margin-top:6px}
 .cat-progress-track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#5f42d9,#60a5fa)}
 @media(max-width:560px){.quick-grid-v292{grid-template-columns:repeat(3,1fr)}.quick-grid-v292 .q4{grid-column:auto}.cat-progress-line{display:block}.cat-progress-line em{display:block;margin-top:2px}}
+
+/* v2.9.7：トップ3項目を横一列に強制復元 */
+.quick-grid.quick-grid-v292{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  justify-content:space-between!important;
+  align-items:flex-start!important;
+  gap:0!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:32px 0 30px!important;
+}
+.quick-grid.quick-grid-v292 .quick{
+  flex:0 0 33.333333%!important;
+  width:33.333333%!important;
+  max-width:33.333333%!important;
+  min-width:0!important;
+  margin:0!important;
+  grid-column:auto!important;
+  display:grid!important;
+  justify-items:center!important;
+  text-align:center!important;
+}
+.quick-grid.quick-grid-v292 .q1,
+.quick-grid.quick-grid-v292 .q3,
+.quick-grid.quick-grid-v292 .q4{
+  grid-column:auto!important;
+  flex-basis:33.333333%!important;
+}
+@media(max-width:560px){
+  .quick-grid.quick-grid-v292{
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    justify-content:space-between!important;
+    align-items:flex-start!important;
+    gap:0!important;
+    margin:24px 0 24px!important;
+  }
+  .quick-grid.quick-grid-v292 .quick{
+    flex:0 0 33.333333%!important;
+    width:33.333333%!important;
+    max-width:33.333333%!important;
+    margin:0!important;
+  }
+}
