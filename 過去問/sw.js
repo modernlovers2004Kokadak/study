@@ -1,4 +1,4 @@
-const CACHE='riyo-kakomon-v2-9-0';
+const CACHE='riyo-kakomon-v2-9-2';
 const ASSETS=['./','./index.html','./style.css','./data.js','./app.js','./manifest.webmanifest'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
 self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));

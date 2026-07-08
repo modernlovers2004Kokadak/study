@@ -79,3 +79,14 @@ b,strong{font-weight:400!important}
 .question-card.imp-red:before{background:#e84b4b}.question-card.imp-orange:before{background:#f59e0b}.question-card.imp-green:before{background:#22c55e}
 
 h1,h2,h3,h4,.law .grow>span,.qtext,.importance-badge{font-weight:400!important}
+
+
+/* v2.9.2：カテゴリ別達成率バー・要復習 */
+.v292-summary{grid-template-columns:repeat(2,1fr)}
+.law-with-progress{align-items:flex-start}
+.cat-progress{margin-top:10px;width:100%}
+.cat-progress-line{display:flex;justify-content:space-between;gap:10px;align-items:center;color:#536580;font-size:13px;line-height:1.45}
+.cat-progress-line em{font-style:normal;color:#27415f;white-space:nowrap}
+.cat-progress-track{height:8px;border-radius:999px;background:#e9eff7;overflow:hidden;margin-top:6px}
+.cat-progress-track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#5f42d9,#60a5fa)}
+@media(max-width:560px){.v292-summary{grid-template-columns:1fr 1fr}.cat-progress-line{display:block}.cat-progress-line em{display:block;margin-top:2px}}
