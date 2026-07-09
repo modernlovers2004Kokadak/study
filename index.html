@@ -42,7 +42,7 @@
 <script>
 const PREFIX='riyo_v05_';
 const store={get:k=>JSON.parse(localStorage.getItem(PREFIX+k)||'null')};
-function baseProg(){return{done:{},answerStats:{},history:[],mistakes:{},themeStats:{},catStats:{},daily:{},recentIds:[],recentThemes:[],settings:{todayCount:21,recentBlock:30,masterNeed:2}}}
+function baseProg(){return{done:{},answerStats:{},history:[],mistakes:{},themeStats:{},catStats:{},daily:{},recentIds:[],recentThemes:[],mockStats:{pass:0,fail:0},settings:{todayCount:21,recentBlock:30,masterNeed:2}}}
 function prog(){return {...baseProg(),...(store.get('prog')||{})}}
 function pct(n,d){return d?Math.round(n/d*100):0}
 function today(){return new Date().toISOString().slice(0,10)}
@@ -70,7 +70,8 @@ function weaknessRows(p){
 
 function solvedIds(p){return new Set(Object.entries(p.answerStats||{}).filter(([id,s])=>s&&s.ok>0).map(([id])=>Number(id)))}
 function solvedCountByCat(p,catId){const solved=solvedIds(p);return catQuestions(catId).filter(q=>solved.has(q.id)).length}
-function categoryProgressHtml(c,i,p){const total=catQuestions(c.id).length,done=solvedCountByCat(p,c.id),rate=pct(done,total);return `<div class="cat-progress"><div class="cat-progress-line"><span>${i+1} ${c.name}</span><em>${rate}%　${done} / ${total} 問 完了</em></div><div class="cat-progress-track"><i style="width:${rate}%"></i></div></div>`}
+function categoryProgressHtml(c,i,p){const total=catQuestions(c.id).length,done=solvedCountByCat(p,c.id),rate=pct(done,total);return `<div class="cat-progress"><div class="cat-progress-line"><em>${rate}%　${done} / ${total} 問 完了</em></div><div class="cat-progress-track"><i style="width:${rate}%"></i></div></div>`}
+function mockStatsText(p){const st={pass:0,fail:0,...((p&&p.mockStats)||{})};return `合格${st.pass||0}回　不合格${st.fail||0}回`}
 
 function renderProgress(){
   const p=prog();
@@ -85,6 +86,8 @@ function renderProgress(){
   const target=Math.ceil(total*.8);
   const remain=Math.max(0,target-done);
   document.getElementById('review-mini').textContent=reviewCount+'問';
+  const mockMini=document.querySelector('.q4 small');
+  if(mockMini)mockMini.textContent=mockStatsText(p);
   document.getElementById('hero-card').innerHTML=`
     <div class="ring big" style="--p:${donePct}"><span>${donePct}%</span><small>完了率</small></div>
     <div class="hero-info">
