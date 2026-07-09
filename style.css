@@ -150,3 +150,11 @@ h1,h2,h3,h4,.cat-title,.entry-text span,.quick span{font-weight:400!important}
     margin:0!important;
   }
 }
+
+
+/* v2.9.10：トップページ上部を教材一覧ページ上部デザインに統一 */
+.hero-top{position:sticky;top:0;z-index:10;height:56px;background:linear-gradient(135deg,#07356f,#001b43);border-bottom:0;overflow:visible}
+.title-banner{height:56px;max-width:780px;margin:auto;background:transparent;padding:0 14px;justify-content:space-between}
+.title-banner:after{right:14px;font-size:22px}
+.hero-title{font-size:16px}
+@media(max-width:560px){.hero-top{height:56px}.title-banner{height:56px;padding:0 14px}.title-banner:after{right:14px;font-size:22px}.hero-title{font-size:16px}}

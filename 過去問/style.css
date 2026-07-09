@@ -90,3 +90,18 @@ h1,h2,h3,h4,.law .grow>span,.qtext,.importance-badge{font-weight:400!important}
 .cat-progress-track{height:8px;border-radius:999px;background:#e9eff7;overflow:hidden;margin-top:6px}
 .cat-progress-track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#5f42d9,#60a5fa)}
 @media(max-width:560px){.v292-summary{grid-template-columns:1fr 1fr}.cat-progress-line{display:block}.cat-progress-line em{display:block;margin-top:2px}}
+
+/* v2.9.8：4択選択肢の文字色・文字サイズのみ調整 */
+.choice{color:#000;font-size:20px}
+@media(max-width:560px){.choice{font-size:18px}}
+
+
+/* v2.9.10：問題集ページ上部を教材一覧ページ上部デザインに統一 */
+.top{position:sticky;top:0;z-index:10;height:56px;background:linear-gradient(135deg,#07356f,#001b43);gap:8px;padding:0 14px}
+.top h1{font-size:16px}
+.top button{font-size:22px}
+.top-spacer{width:36px;height:36px}
+@media(max-width:560px){.top{height:56px;padding:0 14px}.top h1{font-size:16px}.top button{font-size:22px}.top-spacer{width:36px;height:36px}}
+
+/* v2.9.11：問題集ページのタイトル左位置のみ調整 */
+.top-spacer+h1{margin-left:-44px}

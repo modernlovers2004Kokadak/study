@@ -74,7 +74,7 @@ function categoryProgressHtml(c,i,p){const total=catQuestions(c.id).length,done=
 
 function renderProgress(){
   const p=prog();
-  const done=Object.keys(p.done||{}).length;
+  const done=solvedIds(p).size;
   const h=p.history||[];
   const ok=h.filter(x=>x.ok).length;
   const reviewCount=Object.values(p.mistakes||{}).length;
