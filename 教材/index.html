@@ -60,9 +60,7 @@
     <div class="article-top">
       <span id="detailStars" class="stars"></span>
       <div>
-        <button id="weakBtn" class="weak-btn">苦手</button>
         <button id="markDone" class="mark-btn">👍 OK</button>
-        <button id="bookmarkBtn" class="bookmark-btn">🔖 保存</button>
       </div>
     </div>
     <section class="study-box text-section">
@@ -171,7 +169,7 @@
     itemsFor(def).forEach(x=>{
       const row=document.createElement('div');
       row.className='article-row';
-      row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""} ${isWeak(x.law,x.article)?"weak":""} ${isBookmarked(x.law,x.article)?"bookmarked":""}">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;
+      row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;
       row.addEventListener('click',()=>openDetail(x.law,x.article));
       list.appendChild(row);
     });
@@ -188,7 +186,7 @@
     itemsFor(def).forEach(x=>{
       const row=document.createElement('div');
       row.className='article-row';
-      row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""} ${isWeak(x.law,x.article)?"weak":""} ${isBookmarked(x.law,x.article)?"bookmarked":""}">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;
+      row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;
       row.addEventListener('click',()=>{if(x.item.redirect){openDetail(x.item.redirect.law,x.item.redirect.article)}else{openDetail(x.law,x.article)}});
       list.appendChild(row);
     });

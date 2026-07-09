@@ -5,7 +5,7 @@ const today=()=>new Date().toISOString().slice(0,10);
 const addDays=(n)=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
 const jpNo=['1','2','3','4'];
 let state={page:'home',session:[],idx:0,selected:null,answered:false,view:null,filter:'all',themeFilter:null,search:'',mockEnd:null,timer:null,mockRecorded:false};
-function baseProg(){return{done:{},answerStats:{},history:[],mistakes:{},themeStats:{},catStats:{},daily:{},dailyStems:{},recentIds:[],recentThemes:[],mockStats:{pass:0,fail:0},settings:{todayCount:21,recentBlock:30,masterNeed:2,correctCooldown:14,masterCooldown:30,easyCooldown:60,maxKnownToday:2}}}
+function baseProg(){return{done:{},answerStats:{},history:[],mistakes:{},themeStats:{},catStats:{},daily:{},dailyStems:{},recentIds:[],recentThemes:[],mockStats:{pass:0,fail:0},materialOk:{},settings:{todayCount:21,recentBlock:30,masterNeed:2,correctCooldown:14,masterCooldown:30,easyCooldown:60,maxKnownToday:2}}}
 const prog=()=>({...baseProg(),...(store.get('prog')||{})});
 const save=p=>store.set('prog',p);
 const pct=(n,d)=>d?Math.round(n/d*100):0;
@@ -17,6 +17,7 @@ const take=(a,n)=>shuffle(a).slice(0,n);
 const GROUP_RULE={microbe:'disinfection',infection_control:'disinfection',environment:'public_health',health_promo:'public_health',hair:'skin',anatomy:'skin',nutrition:'skin',disease:'skin',surfactant:'cosmetics',perm:'cosmetics',cosmetic_safety:'cosmetics',ph:'cosmetics',color:'cosmetics',style:'history',design:'history',aesthetics:'history',customer:'shop',accounting:'shop',labor:'shop',complaint:'shop',store:'shop',commerce:'shop',shampoo:'cut',setting:'cut',tools:'cut'};
 const groupId=q=>GROUP_RULE[q.category]||q.category;
 const qsCat=id=>QUESTIONS.filter(q=>groupId(q)===id);
+function startCatSession(id){const p=prog(),arr=qsCat(id).filter(q=>!isMastered(p,q));if(arr.length)startSession(arr,'question');else alert('未克服の問題はありません。')}
 const qById=id=>QUESTIONS.find(q=>q.id===Number(id));
 const memGroups=new Set(['infection','disinfection','public_health','skin','cosmetics','cut','shaving']);
 const memoryTarget=q=>memGroups.has(groupId(q))||['hygiene','health','chem','theory'].includes(q.subject);
@@ -36,11 +37,12 @@ function initFromHash(){
   const m=hash.match(/cat=([^&]+)/);
   if(m){
     const id=m[1];
-    const arr=qsCat(id);
+    const p=prog(),arr=qsCat(id).filter(q=>!isMastered(p,q));
     if(arr.length){startSession(arr,'question');return;}
   }
   if(hash.includes('mistakes')){route('mistakes');return;}
   if(hash.includes('review')){route('mistakes');return;}
+  if(hash.includes('mastered')){route('mastered');return;}
   if(hash.includes('mock')){startSession(mockSession(),'question',true);return;}
   render();
 }
@@ -98,8 +100,11 @@ function updateStat(obj,key,ok){obj[key]=obj[key]||{try:0,ok:0};obj[key].try++; 
 function dayDiffFrom(dateStr){if(!dateStr)return 9999;const a=new Date(dateStr+'T00:00:00'),b=new Date(today()+'T00:00:00');return Math.floor((b-a)/86400000)}
 function importanceLabel(q){const n=Number(q.importance||3);return n>=5?'most':n>=4?'important':'frequent'}
 function statFor(p,q){return (p.answerStats&&p.answerStats[q.id])||{try:0,ok:0,streak:0,mastered:false,lastTry:null,lastOk:null,lastNg:null}}
+function isMastered(p,q){const s=statFor(p,q);return !!(s&&s.ok>=5)}
+function masteredList(p){return Object.entries(p.answerStats||{}).filter(([id,s])=>s&&s.ok>=5).map(([id])=>qById(id)).filter(Boolean)}
+function materialOkList(p){return Object.entries(p.materialOk||{}).map(([id,x])=>({id,...x})).filter(x=>x&&x.title)}
 function record(q,ok){const p=prog(),b=base(q),day=today();p.done[q.id]=true;p.answerStats=p.answerStats||{};const s=p.answerStats[q.id]||{id:q.id,try:0,ok:0,streak:0,mastered:false,lastTry:null,lastOk:null,lastNg:null};
- s.try++;s.lastTry=day;if(ok){s.ok++;s.streak=(s.streak||0)+1;s.lastOk=day;if(s.streak>=2)s.mastered=true}else{s.streak=0;s.mastered=false;s.lastNg=day}p.answerStats[q.id]=s;
+ s.try++;s.lastTry=day;if(ok){s.ok++;s.streak=(s.streak||0)+1;s.lastOk=day;if(s.streak>=2)s.mastered=true;if(s.ok>=5)s.conquered=true}else{s.streak=0;s.mastered=false;s.lastNg=day}p.answerStats[q.id]=s;
  p.history.push({id:q.id,ok,day,cat:b.gid,theme:b.theme,tag:b.tag});p.recentIds=[...(p.recentIds||[]),q.id].slice(-100);p.recentThemes=[...(p.recentThemes||[]),b.theme].slice(-100);p.dailyStems=p.dailyStems||{};p.dailyStems[day]=Array.from(new Set([...(p.dailyStems[day]||[]),qStem(q)])).slice(-300);p.daily[day]=p.daily[day]||{try:0,ok:0};p.daily[day].try++;if(ok)p.daily[day].ok++;updateStat(p.catStats,b.gid,ok);updateStat(p.themeStats,b.theme,ok);
  if(!ok){const m=p.mistakes[q.id]||{id:q.id,wrongCount:0,correctCount:0,streak:0,firstMiss:day,mastered:false,history:[]};m.wrongCount++;m.streak=0;m.mastered=false;m.lastMiss=day;m.nextReview=day;m.lastAnswer=state.view.choices[state.selected]?.text||'';m.correct=state.view.choices.find(c=>c.correct)?.text||b.correct;m.history.push({day,ok:false});p.mistakes[q.id]=m}
  else if(p.mistakes[q.id]){delete p.mistakes[q.id]}
@@ -112,13 +117,13 @@ function smartSession(count=21){
  const todaysStems=new Set(((p.dailyStems||{})[today()]||[]));
  const due=Object.values(p.mistakes||{}).filter(m=>!m.mastered&&m.nextReview&&m.nextReview<=today()).map(m=>qById(m.id)).filter(Boolean);
  const wrong=Object.values(p.mistakes||{}).filter(m=>!m.mastered).sort((a,b)=>(b.wrongCount-a.wrongCount)).map(m=>qById(m.id)).filter(Boolean);
- const fresh=QUESTIONS.filter(q=>!p.done[q.id]);
- const oneCorrect=QUESTIONS.filter(q=>{const s=statFor(p,q);return s.ok>0&&!s.mastered&&dayDiffFrom(s.lastOk)>=settings.correctCooldown});
- const reviewImportant=QUESTIONS.filter(q=>{const s=statFor(p,q);return s.mastered&&importanceLabel(q)==='most'&&dayDiffFrom(s.lastOk)>=settings.masterCooldown});
- const reviewEasy=QUESTIONS.filter(q=>{const s=statFor(p,q);return s.mastered&&importanceLabel(q)!=='most'&&dayDiffFrom(s.lastOk)>=settings.easyCooldown});
+ const fresh=QUESTIONS.filter(q=>!p.done[q.id]&&!isMastered(p,q));
+ const oneCorrect=QUESTIONS.filter(q=>{const s=statFor(p,q);return !isMastered(p,q)&&s.ok>0&&!s.mastered&&dayDiffFrom(s.lastOk)>=settings.correctCooldown});
+ const reviewImportant=QUESTIONS.filter(q=>{const s=statFor(p,q);return !isMastered(p,q)&&s.mastered&&importanceLabel(q)==='most'&&dayDiffFrom(s.lastOk)>=settings.masterCooldown});
+ const reviewEasy=QUESTIONS.filter(q=>{const s=statFor(p,q);return !isMastered(p,q)&&s.mastered&&importanceLabel(q)!=='most'&&dayDiffFrom(s.lastOk)>=settings.easyCooldown});
  const knownCount=()=>out.filter(q=>p.done[q.id]).length;
  function eligible(q,allowKnown=false,relaxStem=false){
-   if(!q||used.has(q.id))return false;
+   if(!q||used.has(q.id)||isMastered(p,q))return false;
    const stem=qStem(q);
    if(!relaxStem&&(usedStems.has(stem)||todaysStems.has(stem)))return false;
    const s=statFor(p,q);
@@ -163,7 +168,7 @@ function smartSession(count=21){
  return out
 }
 function mockSession(){let out=[];const cats=shuffle(CATEGORIES);while(out.length<55){for(const c of cats){const pool=qsCat(c.id).filter(q=>!out.includes(q));if(pool.length&&out.length<55)out.push(shuffle(pool)[0])}}return out}
-function startSession(arr,page='question',mock=false){state={...state,page,session:arr,idx:0,selected:null,answered:false,view:null,mockEnd:mock?Date.now()+60*60*1000:null,mockRecorded:false};render();}
+function startSession(arr,page='question',mock=false){if(!arr||!arr.length){alert('出題できる問題がありません。');route('home');return}state={...state,page,session:arr,idx:0,selected:null,answered:false,view:null,mockEnd:mock?Date.now()+60*60*1000:null,mockRecorded:false};render();}
 function route(page,extra={}){state={...state,page,...extra,selected:null,answered:false,view:null};render()}
 const circled=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮'];
 function rankName(q){const v=(q.importance||3);return v>=5?'SS':v>=4?'S':v<=2?'B':'A'}
@@ -186,7 +191,7 @@ function bottom(active){return ``}
 function solvedIds(p){return new Set(Object.entries(p.answerStats||{}).filter(([id,s])=>(s&&s.ok>0)).map(([id])=>Number(id)))}
 function solvedCountByCat(p,catId){const solved=solvedIds(p);return qsCat(catId).filter(q=>solved.has(q.id)).length}
 function categoryProgress(c,i,p){const total=qsCat(c.id).length,done=solvedCountByCat(p,c.id),rate=pct(done,total);return `<div class="cat-progress" aria-label="${c.name} 達成率 ${rate}%"><div class="cat-progress-line"><em>${rate}%　${done} / ${total} 問 完了</em></div><div class="cat-progress-track"><i style="width:${rate}%"></i></div></div>`}
-function needReviewList(p){return Object.values(p.mistakes||{}).sort((a,b)=>(b.wrongCount-a.wrongCount)||String(b.lastMiss||'').localeCompare(String(a.lastMiss||'')))}
+function needReviewList(p){return Object.values(p.mistakes||{}).filter(m=>!isMastered(p,qById(m.id)||{})).sort((a,b)=>(b.wrongCount-a.wrongCount)||String(b.lastMiss||'').localeCompare(String(a.lastMiss||'')))}
 function mockStatsText(p){
  const st={pass:0,fail:0,...((p&&p.mockStats)||{})};
  return `合格${st.pass||0}回　不合格${st.fail||0}回`;
@@ -200,12 +205,12 @@ function recordMockResult(pass){
  state.mockRecorded=true;
 }
 function home(){const p=prog(),reviewCount=needReviewList(p).length;return `<main>${header()}<section class="content today-page"><div class="study-hero"><div class="study-title"><span class="study-icon"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M12 16c8-4 15-3 20 2v32c-5-5-12-6-20-2V16z"/><path d="M52 16c-8-4-15-3-20 2v32c5-5 12-6 20-2V16z"/></svg></span><div><h2>今日の学習</h2><i></i></div></div><p class="study-sub">最重要レベル4択・21問・分野とテーマを自動調整</p><button class="start-circle" onclick="startSession(smartSession(21),'question')"><span>▶</span><small>開始する</small></button></div><div class="summary-panel v292-summary"><button class="summary-item sm-orange" onclick="route('mistakes')"><span class="summary-icon"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 10h24a4 4 0 0 1 4 4v42L32 46 16 56V14a4 4 0 0 1 4-4z"/><path d="M34 18l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6z" opacity=".35"/></svg></span><span>🔖 要復習</span><em>${reviewCount}問</em></button><button class="summary-item sm-blue" onclick="startSession(mockSession(),'question',true)"><span class="summary-icon"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 12h20v10a10 10 0 0 1-20 0V12z" fill="none" stroke="currentColor" stroke-width="6"/><path d="M22 18H12v5a12 12 0 0 0 12 12M42 18h10v5a12 12 0 0 1-12 12" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M32 32v12M24 52h16M20 56h24" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M32 17l2 4 4 .6-3 3 .7 4.4-3.7-2-3.7 2 .7-4.4-3-3 4-.6 2-4z"/></svg></span><span>模試</span><em>${mockStatsText(p)}</em></button></div><section class="problem-category-list">${CATEGORIES.map((c,i)=>catRow(c,i,p)).join('')}</section></section>${bottom('home')}</main>`}
-function catRow(c,i,p){let qs=qsCat(c.id),clr=sub(c.subject).color;return `<button class="law law-with-progress" onclick="startSession(qsCat('${c.id}'),'question')"><span class="num" style="background:${clr}">${i+1}</span><span class="grow"><span>${c.name}</span><small>${rankText(qs)}</small>${categoryProgress(c,i,p)}</span><span class="imp">${qs.length}問 ›</span></button>`}
+function catRow(c,i,p){let qs=qsCat(c.id),clr=sub(c.subject).color;return `<button class="law law-with-progress" onclick="startCatSession('${c.id}')"><span class="num" style="background:${clr}">${i+1}</span><span class="grow"><span>${c.name}</span><small>${rankText(qs)}</small>${categoryProgress(c,i,p)}</span><span class="imp">${qs.length}問 ›</span></button>`}
 function progressCard(p){return ``}
 function lastNDays(n){return Array.from({length:n},(_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return d.toISOString().slice(0,10)})}
 function masterRate(p){const m=Object.values(p.mistakes||{});return m.length?pct(m.filter(x=>x.mastered).length,m.length):0}
 function dueMistakes(p){return Object.values(p.mistakes||{}).filter(m=>!m.mastered&&m.nextReview&&m.nextReview<=today())}
-function startDue(){const p=prog(),arr=needReviewList(p).map(m=>qById(m.id)).filter(Boolean);startSession(arr.length?arr:smartSession(10),'question')}
+function startDue(){const p=prog(),arr=needReviewList(p).map(m=>qById(m.id)).filter(Boolean).filter(q=>!isMastered(p,q));startSession(arr.length?arr:smartSession(10),'question')}
 function question(){let q=currentQ(),b=base(q),c=cat(b.gid),s=sub(q.subject),ci=state.view.choices.findIndex(x=>x.correct),ok=state.answered&&state.view.choices[state.selected]?.correct;return `<main>${header(`${state.mockEnd?'模試':'第'+(state.idx+1)+'問'} / ${state.session.length}問`,true)}${state.answered?`<div class="resultTop ${ok?'ok':'ng'}">${ok?'⭕':'❌'}<span>${ok?'正解':'不正解'}</span>${!ok?`<span>正解 ${jpNo[ci]} ${state.view.choices[ci].text}</span>`:''}</div>`:''}<section class="content questionContent ${state.answered?'withResult':''}"><div class="qcard question-card ${importanceClass(q)}"><div class="qmeta"><span>${s.name} ＞ ${c.name}</span><span>${importanceBadge(q)}・4択</span></div><p class="qtext">${b.question}</p>${state.view.choices.map((ch,i)=>choiceBtn(ch,i)).join('')}</div>${state.answered?answerBox(q,ci,b):''}</section><div class="fixedNext"><button class="${state.answered?'nextBtn':''}" onclick="${state.answered?'nextQ()':'answer()'}">${state.answered?'次へ':'解答する'}</button></div>${bottom('today')}</main>`}
 function choiceBtn(ch,i){let cls='';if(state.selected===i)cls+=' sel';if(state.answered&&ch.correct)cls+=' ok';if(state.answered&&state.selected===i&&!ch.correct)cls+=' ng';return `<button class="choice ${cls}" onclick="select(${i})"><span>${jpNo[i]}</span>${ch.text}</button>`}
 function answerBox(q,ci,b){let mem=memoryTarget(q);return `<div class="qcard answer"><h2>${mem?'ここだけ覚える':'解説'}</h2><div class="point">${b.point}</div>${mem?memoryExplain(q,b):''}<details ${mem?'':'open'}><summary>詳しい解説</summary><p>${b.exp}</p><p class="hint">国家試験では、似た用語・数字・届出先を入れ替えた選択肢に注意します。</p></details>${materialCta(q)}</div>`}
@@ -213,14 +218,19 @@ function memoryExplain(q,b){const gid=groupId(q);let table='';if(gid==='infectio
 function select(i){if(!state.answered){state.selected=i;render()}}
 function answer(){if(state.selected===null)return;record(currentQ(),!!state.view.choices[state.selected]?.correct);state.answered=true;render()}
 function nextQ(){state.idx<state.session.length-1?route('question',{idx:state.idx+1}):route('score')}
+
+function mastered(){const p=prog(),list=masteredList(p).filter(q=>state.filter==='all'||groupId(q)===state.filter),materials=state.filter==='all'?materialOkList(p):[];return `<main>${header('克服済み',true)}<section class="content"><div class="chips"><button onclick="state.filter='all';render()">すべて</button>${CATEGORIES.map(c=>`<button onclick="state.filter='${c.id}';render()">${c.name}</button>`).join('')}</div>${(list.length||materials.length)?list.map(q=>masteredRow(q,p)).join('')+materials.map(materialOkRow).join(''):'<div class="empty">克服済みの問題はありません。</div>'}</section>${bottom('mastered')}</main>`}
+function masteredRow(q,p){const s=statFor(p,q),b=base(q);return `<div class="law"><span class="num">★</span><span class="grow"><span>${cat(b.gid).name}／${b.point}</span><small>克服済み　正答 ${s.ok||0}回</small></span><span>✓</span></div>`}
+function materialOkRow(x){return `<a class="law" href="../教材/index.html#law=${x.law}"><span class="num">👍</span><span class="grow"><span>${x.lawName||'教材'}／${x.title}</span><small>克服済み　👍OK登録</small></span><span>開く ›</span></a>`}
+
 function mistakes(){const p=prog(),list=needReviewList(p).filter(m=>state.filter==='all'||groupId(qById(m.id)||{})===state.filter);return `<main>${header('🔖 要復習',true)}<section class="content"><div class="chips"><button onclick="state.filter='all';render()">すべて</button>${CATEGORIES.map(c=>`<button onclick="state.filter='${c.id}';render()">${c.name}</button>`).join('')}</div>${list.length?list.map(m=>mistakeRow(m)).join(''):'<div class="empty">要復習の問題はありません。</div>'}</section>${bottom('mistake')}</main>`}
 function mistakeRow(m){const q=qById(m.id),b=base(q);return `<button class="law" onclick="startSession([qById(${m.id})],'question')"><span class="num">🔖</span><span class="grow"><span>${cat(b.gid).name}／${b.point}</span><small>登録中　ミス ${m.wrongCount}回　最終 ${m.lastMiss||m.firstMiss||'記録なし'}</small></span><span>解く ›</span></button>`}
 function rankingCard(p){return `<div class="qcard"><h2>苦手ランキング</h2>${rankingList(p)}<button class="primary light" onclick="route('mistakes')">🔖 要復習へ</button></div>`}
 function rankingList(p){const map={};Object.values(p.mistakes||{}).forEach(m=>{if(m.mastered)return;const q=qById(m.id);if(!q)return;const b=base(q),k=b.point;map[k]=(map[k]||0)+m.wrongCount});const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5);return arr.length?arr.map((x,i)=>`<div class="rank"><span>${i+1}　${x[0]}</span><span>${x[1]}回</span></div>`).join(''):'<p class="muted">まだ苦手データがありません</p>'}
 function score(){const p=prog();if(state.mockEnd){const recent=(p.history||[]).slice(-state.session.length),ok=recent.filter(x=>x.ok).length,pass=ok>=33;recordMockResult(pass);return `<main>${header('模試結果',true)}<section class="content"><div class="qcard"><h2>${pass?'合格！':'不合格！'}</h2><p class="score">${ok} / ${state.session.length}</p></div></section>${bottom('score')}</main>`}return `<main>${header('学習記録',true)}<section class="content"><div class="qcard"><h2>正解済み</h2><p class="score">${solvedIds(p).size} / ${QUESTIONS.length}</p></div></section>${bottom('score')}</main>`}
-function catScoreRow(c,i,p){let qs=qsCat(c.id),st=p.catStats?.[c.id]||{try:0,ok:0};return `<button class="subject-row" onclick="startSession(qsCat('${c.id}'),'question')"><span>${c.name}<small>${rankText(qs)}</small></span><span>正答率 ${pct(st.ok,st.try)}%</span></button>`}
+function catScoreRow(c,i,p){let qs=qsCat(c.id),st=p.catStats?.[c.id]||{try:0,ok:0};return `<button class="subject-row" onclick="startCatSession('${c.id}')"><span>${c.name}<small>${rankText(qs)}</small></span><span>正答率 ${pct(st.ok,st.try)}%</span></button>`}
 function themeName(k){const [gid,idx]=k.split(':'),q=QUESTIONS.find(x=>groupId(x)===gid&&String(templateIndex(x))===idx);return `${cat(gid).name}／${base(q||QUESTIONS[0]).point}`}
-function searchPage(){let t=state.search,qs=t?QUESTIONS.filter(q=>{let b=base(q);return (b.question+b.exp+b.point+cat(b.gid).name).includes(t)}):[];return `<main>${header('検索',true)}<section class="content"><input class="search" placeholder="キーワードで検索" value="${t}" oninput="state.search=this.value;render()">${qs.map(q=>{let b=base(q);return `<button class="law" onclick="startSession([qById(${q.id})],'question')"><span class="num">⌕</span><span class="grow"><span>${cat(b.gid).name}</span><small>${b.question}</small></span><span>›</span></button>`}).join('')}</section>${bottom('home')}</main>`}
+function searchPage(){let p=prog(),t=state.search,qs=t?QUESTIONS.filter(q=>!isMastered(p,q)).filter(q=>{let b=base(q);return (b.question+b.exp+b.point+cat(b.gid).name).includes(t)}):[];return `<main>${header('検索',true)}<section class="content"><input class="search" placeholder="キーワードで検索" value="${t}" oninput="state.search=this.value;render()">${qs.map(q=>{let b=base(q);return `<button class="law" onclick="startSession([qById(${q.id})],'question')"><span class="num">⌕</span><span class="grow"><span>${cat(b.gid).name}</span><small>${b.question}</small></span><span>›</span></button>`}).join('')}</section>${bottom('home')}</main>`}
 function settings(){return `<main>${header('設定',true)}<section class="content"><div class="qcard"><p>学習データはこの端末のブラウザに保存されます。</p><button class="danger" onclick="if(confirm('学習データを削除しますか？')){localStorage.removeItem(PREFIX+'prog');route('home')}">学習データをリセット</button></div></section>${bottom('settings')}</main>`}
-function render(){app.innerHTML=({home,question,mistakes,search:searchPage,score,settings}[state.page]||home)()}
+function render(){app.innerHTML=({home,question,mistakes,mastered,search:searchPage,score,settings}[state.page]||home)()}
 initFromHash();

@@ -76,10 +76,18 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":
 function highlight(s,terms=[]){let out=escapeHtml(s);terms.forEach(t=>{if(!t)return;out=out.replaceAll(escapeHtml(t),`<span class="term">${escapeHtml(t)}</span>`)});return out;}
 function bodyHtml(text,terms){const parts=text.split(/ (?=[一二三四五六七八九十12345678900-9]+[ 　])/);if(parts.length<=1)return `<p>${highlight(text,terms)}</p>`;const first=parts.shift();return `<p>${highlight(first,terms)}</p><ul class="body-list">`+parts.map(p=>`<li>${highlight(p.replace(/^[一二三四五六七八九十12345678900-9]+[ 　]/,""),terms)}</li>`).join("")+`</ul>`;}
 function applyMode(){document.body.classList.remove("mode-text","mode-point");if(mode==="text")document.body.classList.add("mode-text");if(mode==="point")document.body.classList.add("mode-point");localStorage.setItem("study_mode",mode);}
-function toggleDone(li,ai){const id=`${li}-${ai}`;done.has(id)?done.delete(id):done.add(id);save();}
+function syncMaterialOk(li,ai){
+ const id=`${li}-${ai}`;
+ const law=DATA[li]||{name:"教材",articles:[]}, a=(law.articles||[])[ai]||{};
+ const p=JSON.parse(localStorage.getItem(QUIZ_PROG_KEY)||"null")||{};
+ p.materialOk=p.materialOk||{};
+ p.materialOk[id]={id,law:li,article:ai,lawName:law.name,title:a.title||"条文",day:new Date().toISOString().slice(0,10)};
+ localStorage.setItem(QUIZ_PROG_KEY,JSON.stringify(p));
+}
+function toggleDone(li,ai){const id=`${li}-${ai}`;if(!done.has(id)){done.add(id);syncMaterialOk(li,ai);}save();}
 function toggleBookmark(li,ai){const id=`${li}-${ai}`;bookmarks.has(id)?bookmarks.delete(id):bookmarks.add(id);save();}
-function actionButtons(li,ai){return `<div class="article-actions"><button class="mini-btn done-toggle ${isDone(li,ai)?"on":""}" data-law="${li}" data-article="${ai}" aria-label="学習済み">👍</button><button class="mini-btn bookmark-toggle ${isBookmarked(li,ai)?"on":""}" data-law="${li}" data-article="${ai}" aria-label="ブックマーク">🔖</button></div>`;}
-function bindActionButtons(root=document){root.querySelectorAll(".done-toggle").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();toggleDone(Number(btn.dataset.law),Number(btn.dataset.article));}));root.querySelectorAll(".bookmark-toggle").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();toggleBookmark(Number(btn.dataset.law),Number(btn.dataset.article));}));}
+function actionButtons(li,ai){return `<div class="article-actions"><button class="mini-btn done-toggle ${isDone(li,ai)?"on":""}" data-law="${li}" data-article="${ai}" aria-label="OK">👍</button></div>`;}
+function bindActionButtons(root=document){root.querySelectorAll(".done-toggle").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();toggleDone(Number(btn.dataset.law),Number(btn.dataset.article));}));}
 function renderHome(){
  const list=document.getElementById("lawList");list.innerHTML="";
  DATA.forEach((law,i)=>{
@@ -93,9 +101,8 @@ function renderHome(){
 function renderHomeActions(){
  let box=document.getElementById("homeActions");
  if(!box){box=document.createElement("div");box.id="homeActions";box.className="home-actions";document.getElementById("home").appendChild(box);}
- box.innerHTML=`<button id="homeDoneBtn" class="home-action-btn">👍 学習済み ${done.size}</button><button id="homeBookmarkBtn" class="home-action-btn">🔖 ブックマーク ${bookmarks.size}</button>`;
- document.getElementById("homeDoneBtn").addEventListener("click",()=>renderFilteredList("👍 学習済み",x=>done.has(x.id)));
- document.getElementById("homeBookmarkBtn").addEventListener("click",()=>renderFilteredList("🔖 ブックマーク",x=>bookmarks.has(x.id)));
+ box.innerHTML=`<button id="homeDoneBtn" class="home-action-btn">👍 OK ${done.size}</button>`;
+ document.getElementById("homeDoneBtn").addEventListener("click",()=>renderFilteredList("👍 OK",x=>done.has(x.id)));
 }
 function renderProgress(){
  const total=flat.length;
@@ -158,7 +165,7 @@ function renderProgress(){
 
 function renderArticles(filter=""){
  const law=DATA[currentLaw];document.getElementById("lawTitle").textContent=law.name;const list=document.getElementById("articleList");list.innerHTML="";
- law.articles.forEach((a,i)=>{const hay=law.name+a.title+a.body+a.points.join("")+(a.traps||[]).join("")+(a.terms||[]).join("");if(filter&&!hay.includes(filter))return;const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title ${isDone(currentLaw,i)?"done":""} ${isWeak(currentLaw,i)?"weak":""} ${isBookmarked(currentLaw,i)?"bookmarked":""}">${a.title}</span><span class="stars">${rankBadge(a.importance||a.stars)} ›</span>${actionButtons(currentLaw,i)}`;row.addEventListener("click",()=>{
+ law.articles.forEach((a,i)=>{const hay=law.name+a.title+a.body+a.points.join("")+(a.traps||[]).join("")+(a.terms||[]).join("");if(filter&&!hay.includes(filter))return;const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title ${isDone(currentLaw,i)?"done":""}">${a.title}</span><span class="stars">${rankBadge(a.importance||a.stars)} ›</span>${actionButtons(currentLaw,i)}`;row.addEventListener("click",()=>{
   if(a.redirect){openDetail(a.redirect.law,a.redirect.article)}
   else{openDetail(currentLaw,i)}
 });list.appendChild(row);});
@@ -166,7 +173,7 @@ function renderArticles(filter=""){
  const cta=document.getElementById('fieldQuizCta');
  if(cta){cta.innerHTML=quizCtaHtml(currentLaw,null,'問題');}
 }
-function renderFilteredList(title,predicate){const box=document.getElementById("searchResults");box.innerHTML="";const h=document.querySelector("#searchScreen h2");if(h)h.textContent=title;const results=flat.filter(predicate);if(!results.length){box.innerHTML='<div class="empty">該当する項目はありません。</div>';}else{const list=document.createElement("div");list.className="cat-list";results.forEach(x=>{const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""} ${isWeak(x.law,x.article)?"weak":""} ${isBookmarked(x.law,x.article)?"bookmarked":""}">${DATA[x.law].name}　${x.item.title}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;row.addEventListener("click",()=>{
+function renderFilteredList(title,predicate){const box=document.getElementById("searchResults");box.innerHTML="";const h=document.querySelector("#searchScreen h2");if(h)h.textContent=title;const results=flat.filter(predicate);if(!results.length){box.innerHTML='<div class="empty">該当する項目はありません。</div>';}else{const list=document.createElement("div");list.className="cat-list";results.forEach(x=>{const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${DATA[x.law].name}　${x.item.title}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;row.addEventListener("click",()=>{
   if(x.item.redirect){openDetail(x.item.redirect.law,x.item.redirect.article)}
   else{openDetail(x.law,x.article)}
 });list.appendChild(row)});box.appendChild(list);bindActionButtons(box);}show("searchScreen");}
@@ -193,16 +200,14 @@ function openDetail(li,ai){
  if(qcta){qcta.innerHTML=quizCtaHtml(li,a,'問題');}
  updateButtons();applyMode();document.getElementById("detail").classList.remove("hidden");
 }
-function updateButtons(){const id=`${currentLaw}-${currentArticle}`;const btn=document.getElementById("markDone"), w=document.getElementById("weakBtn"), b=document.getElementById("bookmarkBtn");if(btn){btn.textContent=done.has(id)?"👍 学習済み":"👍 OK";btn.classList.toggle("done",done.has(id));}if(w){w.classList.toggle("on",weak.has(id));}if(b){b.textContent=bookmarks.has(id)?"🔖 保存中":"🔖 保存";b.classList.toggle("on",bookmarks.has(id));}}
+function updateButtons(){const id=`${currentLaw}-${currentArticle}`;const btn=document.getElementById("markDone");if(btn){btn.textContent=done.has(id)?"👍 OK済み":"👍 OK";btn.classList.toggle("done",done.has(id));}}
 document.getElementById("markDone").addEventListener("click",()=>toggleDone(currentLaw,currentArticle));
-document.getElementById("weakBtn").addEventListener("click",()=>{const id=`${currentLaw}-${currentArticle}`;weak.has(id)?weak.delete(id):weak.add(id);save();});
-document.getElementById("bookmarkBtn").addEventListener("click",()=>toggleBookmark(currentLaw,currentArticle));
 document.getElementById("closeDetail").addEventListener("click",()=>document.getElementById("detail").classList.add("hidden"));
 document.getElementById("prevBtn").addEventListener("click",()=>{const idx=flat.findIndex(x=>x.law===currentLaw&&x.article===currentArticle);if(idx>0){const n=flat[idx-1];openDetail(n.law,n.article)}});
 document.getElementById("nextBtn").addEventListener("click",()=>{const idx=flat.findIndex(x=>x.law===currentLaw&&x.article===currentArticle);if(idx<flat.length-1){const n=flat[idx+1];openDetail(n.law,n.article)}});
 document.getElementById("backHome").addEventListener("click",()=>show("home"));document.getElementById("backSearchHome").addEventListener("click",()=>{const h=document.querySelector("#searchScreen h2");if(h)h.textContent="検索結果";show("home")});
 document.getElementById("searchBtn").addEventListener("click",()=>document.getElementById("searchBar").classList.toggle("open"));
-function renderSearch(q){const box=document.getElementById("searchResults");box.innerHTML="";const h=document.querySelector("#searchScreen h2");if(h)h.textContent="検索結果";if(!q){show("home");return}const groups={};flat.filter(x=>(DATA[x.law].name+x.item.title+x.item.body+x.item.points.join("")+(x.item.traps||[]).join("")+(x.item.terms||[]).join("")).includes(q)).forEach(x=>{const cat=x.item.category||"その他";(groups[cat]||(groups[cat]=[])).push(x)});Object.keys(groups).forEach(cat=>{const h=document.createElement("h3");h.className="cat-title";h.textContent=cat+"（"+groups[cat].length+"）";box.appendChild(h);const list=document.createElement("div");list.className="cat-list";groups[cat].forEach(x=>{const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""} ${isWeak(x.law,x.article)?"weak":""} ${isBookmarked(x.law,x.article)?"bookmarked":""}">${DATA[x.law].name}　${x.item.title}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;row.addEventListener("click",()=>openDetail(x.law,x.article));list.appendChild(row)});box.appendChild(list);bindActionButtons(list)});show("searchScreen");}
+function renderSearch(q){const box=document.getElementById("searchResults");box.innerHTML="";const h=document.querySelector("#searchScreen h2");if(h)h.textContent="検索結果";if(!q){show("home");return}const groups={};flat.filter(x=>(DATA[x.law].name+x.item.title+x.item.body+x.item.points.join("")+(x.item.traps||[]).join("")+(x.item.terms||[]).join("")).includes(q)).forEach(x=>{const cat=x.item.category||"その他";(groups[cat]||(groups[cat]=[])).push(x)});Object.keys(groups).forEach(cat=>{const h=document.createElement("h3");h.className="cat-title";h.textContent=cat+"（"+groups[cat].length+"）";box.appendChild(h);const list=document.createElement("div");list.className="cat-list";groups[cat].forEach(x=>{const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${DATA[x.law].name}　${x.item.title}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;row.addEventListener("click",()=>openDetail(x.law,x.article));list.appendChild(row)});box.appendChild(list);bindActionButtons(list)});show("searchScreen");}
 document.getElementById("searchInput").addEventListener("input",e=>renderSearch(e.target.value.trim()));
 
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
