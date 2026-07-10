@@ -60,7 +60,7 @@
     <div class="article-top">
       <span id="detailStars" class="stars"></span>
       <div>
-        <button id="markDone" class="mark-btn">👍 OK</button>
+        <button id="markDone" class="mark-btn">👍️</button>
       </div>
     </div>
     <section class="study-box text-section">
@@ -91,7 +91,7 @@
 <script src="script.js?v=6"></script>
 <script>
 (function(){
-  const CIRCLED=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯'];
+  const CATEGORY_NUMBERS=['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'];
   const FIELD_ROWS=[
     {label:'理容師法',source:3},
     {label:'理容師法施行令',source:5},
@@ -225,7 +225,7 @@
       const base=original[def.source];
       if(!base)return;
       const row=base.cloneNode(true);
-      setRow(row,CIRCLED[i],def.label,progressHtml(itemsFor(def)));
+      setRow(row,CATEGORY_NUMBERS[i],def.label,progressHtml(itemsFor(def)));
       row.addEventListener('click',()=>renderFieldArticles(def));
       list.appendChild(row);
     });

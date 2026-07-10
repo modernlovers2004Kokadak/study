@@ -78,6 +78,40 @@ function categoryProgressHtml(c,i,p){const total=catQuestions(c.id).length,done=
 function mockStatsText(p){const st={pass:0,fail:0,...((p&&p.mockStats)||{})};return `合格${st.pass||0}回/不合格${st.fail||0}回`}
 function scoreCounts(p){const h=p.history||[];return{ok:h.filter(x=>x.ok).length,ng:h.filter(x=>!x.ok).length}}
 function visibleScoreCounts(p){const c=scoreCounts(p),b={ok:0,ng:0,...(p.scoreResetBase||{})};return{ok:Math.max(0,c.ok-(b.ok||0)),ng:Math.max(0,c.ng-(b.ng||0))}}
+const STUDY_BACKUP_KEYS=['riyo_v05_prog','riyoushi_9laws_final_done_v3','riyoushi_9laws_final_weak_v2','riyoushi_9laws_final_bookmark_v1','study_mode'];
+const STUDY_BACKUP_ID='国家試験学習データ';
+function backupFileName(){const d=new Date(),z=n=>String(n).padStart(2,'0');return `国家試験_学習データ_${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}.json`}
+function backupStudyData(){
+  const data={};
+  STUDY_BACKUP_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!==null)data[k]=v});
+  const backup={format:STUDY_BACKUP_ID,version:1,createdAt:new Date().toISOString(),app:{name:'理容師国家試験対策',storage:'localStorage'},data};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=backupFileName();document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function chooseRestoreFile(){document.getElementById('restore-file').click()}
+function restoreStudyData(input){
+  const file=input.files&&input.files[0];input.value='';if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let backup;
+    try{backup=JSON.parse(reader.result)}catch(e){alert('このファイルは有効な学習データではありません。');return}
+    const valid=backup&&backup.format===STUDY_BACKUP_ID&&backup.version===1&&backup.data&&typeof backup.data==='object'&&!Array.isArray(backup.data)&&Object.keys(backup.data).every(k=>STUDY_BACKUP_KEYS.includes(k)&&typeof backup.data[k]==='string');
+    if(!valid){alert('このファイルは有効な学習データではありません。');return}
+    if(!confirm('現在の学習データをバックアップデータで置き換えます。復元してよろしいですか？'))return;
+    const before={};STUDY_BACKUP_KEYS.forEach(k=>before[k]=localStorage.getItem(k));
+    try{
+      STUDY_BACKUP_KEYS.forEach(k=>localStorage.removeItem(k));
+      Object.entries(backup.data).forEach(([k,v])=>localStorage.setItem(k,v));
+    }catch(e){
+      STUDY_BACKUP_KEYS.forEach(k=>localStorage.removeItem(k));
+      Object.entries(before).forEach(([k,v])=>{if(v!==null)localStorage.setItem(k,v)});
+      alert('学習データを復元できませんでした。現在のデータは変更されていません。');return;
+    }
+    alert('学習データを復元しました。');location.reload();
+  };
+  reader.onerror=()=>alert('このファイルは有効な学習データではありません。');
+  reader.readAsText(file);
+}
 function resetStudyData(){if(!confirm('学習データを初期化します。正答・誤答・学習履歴・要復習・達成率などの学習記録が削除されます。問題データ・教材データは削除されません。よろしいですか？'))return;const p=prog();const next=baseProg();next.settings={...next.settings,...(p.settings||{})};store.set('prog',next);renderProgress()}
 
 function renderProgress(){
@@ -120,7 +154,7 @@ function renderProgress(){
   document.getElementById('weak-card').innerHTML=`
     <div class="section-head"><h2><span class="flame">◆</span>苦手ランキング</h2><a href="過去問/index.html#mistakes">すべて見る ›</a></div>
     ${wr.length ? `<div class="weak-list">${wr.map((w,i)=>`<a class="weak-row" href="過去問/index.html#mistakes"><span class="rank r${i+1}">${i+1}</span><span>${w.name}</span><small>正答率 <em>${w.rate}%</em></small><span class="go">›</span></a>`).join('')}</div>` : `<div class="empty-weak">まだ苦手データがありません</div>`}`;
-  document.getElementById('reset-card').innerHTML=`<div class="reset-counts"><span>正答数：${score.ok}</span><span>誤答数：${score.ng}</span></div><button class="reset-button" onclick="resetStudyData()">学習データ初期化</button>`;
+  document.getElementById('reset-card').innerHTML=`<div class="reset-counts"><span>正答数：${score.ok}</span><span>誤答数：${score.ng}</span></div><div class="data-buttons"><button class="data-button" onclick="backupStudyData()">💾 バックアップ</button><button class="data-button" onclick="chooseRestoreFile()">📂 復元</button><button class="reset-button" onclick="resetStudyData()">初期化</button></div><input id="restore-file" class="restore-file" type="file" accept="application/json,.json" onchange="restoreStudyData(this)">`;
 }
 function renderCategories(){}
 renderProgress();

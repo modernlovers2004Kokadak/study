@@ -86,7 +86,7 @@ function syncMaterialOk(li,ai){
 }
 function toggleDone(li,ai){const id=`${li}-${ai}`;if(!done.has(id)){done.add(id);syncMaterialOk(li,ai);}save();}
 function toggleBookmark(li,ai){const id=`${li}-${ai}`;bookmarks.has(id)?bookmarks.delete(id):bookmarks.add(id);save();}
-function actionButtons(li,ai){return `<div class="article-actions"><button class="mini-btn done-toggle ${isDone(li,ai)?"on":""}" data-law="${li}" data-article="${ai}" aria-label="OK">👍</button></div>`;}
+function actionButtons(li,ai){return `<div class="article-actions"><button class="mini-btn done-toggle ${isDone(li,ai)?"on":""}" data-law="${li}" data-article="${ai}" aria-label="学習済み">👍️</button></div>`;}
 function bindActionButtons(root=document){root.querySelectorAll(".done-toggle").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();toggleDone(Number(btn.dataset.law),Number(btn.dataset.article));}));}
 function renderHome(){
  const list=document.getElementById("lawList");list.innerHTML="";
@@ -200,7 +200,7 @@ function openDetail(li,ai){
  if(qcta){qcta.innerHTML=quizCtaHtml(li,a,'問題');}
  updateButtons();applyMode();document.getElementById("detail").classList.remove("hidden");
 }
-function updateButtons(){const id=`${currentLaw}-${currentArticle}`;const btn=document.getElementById("markDone");if(btn){btn.textContent=done.has(id)?"👍 OK済み":"👍 OK";btn.classList.toggle("done",done.has(id));}}
+function updateButtons(){const id=`${currentLaw}-${currentArticle}`;const btn=document.getElementById("markDone");if(btn){btn.textContent="👍️";btn.classList.toggle("done",done.has(id));}}
 document.getElementById("markDone").addEventListener("click",()=>toggleDone(currentLaw,currentArticle));
 document.getElementById("closeDetail").addEventListener("click",()=>document.getElementById("detail").classList.add("hidden"));
 document.getElementById("prevBtn").addEventListener("click",()=>{const idx=flat.findIndex(x=>x.law===currentLaw&&x.article===currentArticle);if(idx>0){const n=flat[idx-1];openDetail(n.law,n.article)}});
