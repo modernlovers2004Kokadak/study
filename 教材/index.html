@@ -169,11 +169,10 @@
     itemsFor(def).forEach(x=>{
       const row=document.createElement('div');
       row.className='article-row';
-      row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;
+      row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>`;
       row.addEventListener('click',()=>openDetail(x.law,x.article));
       list.appendChild(row);
     });
-    bindActionButtons(list);
     const cta=document.getElementById('fieldQuizCta');
     if(cta)cta.innerHTML='';
     show('lawScreen');
@@ -186,11 +185,10 @@
     itemsFor(def).forEach(x=>{
       const row=document.createElement('div');
       row.className='article-row';
-      row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;
+      row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>`;
       row.addEventListener('click',()=>{if(x.item.redirect){openDetail(x.item.redirect.law,x.item.redirect.article)}else{openDetail(x.law,x.article)}});
       list.appendChild(row);
     });
-    bindActionButtons(list);
     const cta=document.getElementById('fieldQuizCta');
     if(cta)cta.innerHTML=quizCtaHtml(def.source,null,'問題');
     show('lawScreen');
@@ -245,7 +243,25 @@
       if(law)law.textContent=cleanLabel(law.textContent);
     };
   }
+  function openMaterialFromHash(){
+    const hash=decodeURIComponent(location.hash||'');
+    const match=hash.match(/material=(important|field)-(\d+)/);
+    if(!match)return;
+    const index=Number(match[2]);
+    if(match[1]==='important'){
+      const defs=[
+        {source:0,label:'最重要条文'},
+        {source:1,label:'重要条文'},
+        {source:2,label:'頻出条文'},
+        {source:3,label:'基本条文',rank:'★★'}
+      ];
+      if(defs[index])renderImportantArticles(defs[index]);
+      return;
+    }
+    if(FIELD_ROWS[index])renderFieldArticles(FIELD_ROWS[index]);
+  }
   organizeMaterialList();
+  openMaterialFromHash();
 })();
 </script>
 <div class="floating-nav"><button class="floating-back" type="button" onclick="history.back()" aria-label="戻る">‹<span class="home-label">戻る</span></button><a class="floating-home" href="../index.html" aria-label="ホームへ戻る">⌂<span class="home-label">ホーム</span></a></div>

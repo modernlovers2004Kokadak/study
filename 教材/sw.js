@@ -1,4 +1,4 @@
-const CACHE_NAME="riyoushi-9laws-final-v6-thumb-ok-bookmark-rankfix2";
+const CACHE_NAME="riyoushi-9laws-final-v2-9-40";
 const ASSETS=["./","./index.html","./style.css?v=7","./script.js?v=7","./data.js?v=7","./manifest.json"];
 self.addEventListener("install",event=>{
   self.skipWaiting();
