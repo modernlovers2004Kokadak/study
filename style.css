@@ -205,3 +205,5 @@ h1,h2,h3,h4,.cat-title,.entry-text span,.quick span{font-weight:400!important}
 /* v2.9.42：学習状況カードと上部ボタン間の余白調整 */
 .entry-grid{margin-top:28px}
 @media(max-width:560px){.entry-grid{margin-top:24px}}
+
+.app-version{margin-top:12px;text-align:center;font-size:11px;line-height:1.4;color:#8a96a8}

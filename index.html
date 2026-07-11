@@ -45,6 +45,7 @@
 const PREFIX='riyo_v05_';
 const store={get:k=>JSON.parse(localStorage.getItem(PREFIX+k)||'null'),set:(k,v)=>localStorage.setItem(PREFIX+k,JSON.stringify(v))};
 const MATERIAL_DONE_KEY='riyoushi_9laws_final_done_v3';
+const APP_VERSION='2.9.47';
 const MATERIAL_CATEGORY_NUMBERS=['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'];
 const MATERIAL_IMPORTANT_ROWS=[
   {source:0,label:'最重要条文',mark:'#d93025'},
@@ -196,11 +197,14 @@ function renderProgress(){
   document.getElementById('weak-card').innerHTML=`
     <div class="section-head"><h2><span class="flame">◆</span>苦手ランキング</h2><a href="過去問/index.html#mistakes">すべて見る ›</a></div>
     ${wr.length ? `<div class="weak-list">${wr.map((w,i)=>`<a class="weak-row" href="過去問/index.html#mistakes"><span class="rank r${i+1}">${i+1}</span><span>${w.name}</span><small>正答率 <em>${w.rate}%</em></small><span class="go">›</span></a>`).join('')}</div>` : `<div class="empty-weak">まだ苦手データがありません</div>`}`;
-  document.getElementById('reset-card').innerHTML=`<div class="reset-counts"><span>正答数：${score.ok}</span><span>誤答数：${score.ng}</span></div><div class="data-buttons"><button class="data-button" onclick="backupStudyData()">💾 バックアップ</button><button class="data-button" onclick="chooseRestoreFile()">📂 復元</button><button class="reset-button" onclick="resetStudyData()">初期化</button></div><input id="restore-file" class="restore-file" type="file" accept="application/json,.json" onchange="restoreStudyData(this)">`;
+  document.getElementById('reset-card').innerHTML=`<div class="reset-counts"><span>正答数：${score.ok}</span><span>誤答数：${score.ng}</span></div><div class="data-buttons"><button class="data-button" onclick="backupStudyData()">💾 バックアップ</button><button class="data-button" onclick="chooseRestoreFile()">📂 復元</button><button class="reset-button" onclick="resetStudyData()">初期化</button></div><input id="restore-file" class="restore-file" type="file" accept="application/json,.json" onchange="restoreStudyData(this)"><div class="app-version">Version ${APP_VERSION}</div>`;
 }
 function renderCategories(){}
 renderProgress();
 renderCategories();
+window.addEventListener('pageshow',()=>renderProgress());
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')renderProgress();});
+window.addEventListener('storage',e=>{if(e.key===MATERIAL_DONE_KEY)renderMaterialCategories();});
 if ('serviceWorker' in navigator) {
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
