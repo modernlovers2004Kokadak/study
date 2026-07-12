@@ -10726,3 +10726,4 @@ const QUESTIONS = [
     "themeId": "shaving-総合判断"
   }
 ];
+QUESTIONS.forEach(q=>{q.evidenceLevel='B';});

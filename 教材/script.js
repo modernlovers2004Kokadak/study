@@ -1,10 +1,14 @@
-let currentLaw=0,currentArticle=0,mode=localStorage.getItem("study_mode")||"all";
+function storageGet(key){try{return localStorage.getItem(key)}catch(e){return null}}
+function storageSet(key,value){try{localStorage.setItem(key,value);return true}catch(e){return false}}
+function safeJson(key,fallback,validate){const raw=storageGet(key);if(raw===null)return fallback;try{const value=JSON.parse(raw);return !validate||validate(value)?value:fallback}catch(e){return fallback}}
+function localDateString(d=new Date()){const z=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`}
+let currentLaw=0,currentArticle=0,mode=storageGet("study_mode")||"all";
 const DONE_KEY="riyoushi_9laws_final_done_v3";
 const WEAK_KEY="riyoushi_9laws_final_weak_v2";
 const BOOKMARK_KEY="riyoushi_9laws_final_bookmark_v1";
-const done=new Set(JSON.parse(localStorage.getItem(DONE_KEY)||"[]"));
-const weak=new Set(JSON.parse(localStorage.getItem(WEAK_KEY)||"[]"));
-const bookmarks=new Set(JSON.parse(localStorage.getItem(BOOKMARK_KEY)||"[]"));
+const done=new Set(safeJson(DONE_KEY,[],Array.isArray));
+const weak=new Set(safeJson(WEAK_KEY,[],Array.isArray));
+const bookmarks=new Set(safeJson(BOOKMARK_KEY,[],Array.isArray));
 const flat=[];
 DATA.forEach((law,li)=>law.articles.forEach((a,ai)=>flat.push({law:li,article:ai,id:`${li}-${ai}`,item:a})));
 
@@ -70,39 +74,27 @@ function openFromHash(){
 
 
 function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");window.scrollTo({top:0,behavior:"smooth"});}
-function save(){localStorage.setItem(DONE_KEY,JSON.stringify([...done]));localStorage.setItem(WEAK_KEY,JSON.stringify([...weak]));localStorage.setItem(BOOKMARK_KEY,JSON.stringify([...bookmarks]));renderHome();renderArticles();updateButtons();}
+function save(){storageSet(DONE_KEY,JSON.stringify([...done]));storageSet(WEAK_KEY,JSON.stringify([...weak]));storageSet(BOOKMARK_KEY,JSON.stringify([...bookmarks]));renderHome();renderArticles();}
 function isDone(li,ai){return done.has(`${li}-${ai}`);} function isWeak(li,ai){return weak.has(`${li}-${ai}`);} function isBookmarked(li,ai){return bookmarks.has(`${li}-${ai}`);}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
 function highlight(s,terms=[]){let out=escapeHtml(s);terms.forEach(t=>{if(!t)return;out=out.replaceAll(escapeHtml(t),`<span class="term">${escapeHtml(t)}</span>`)});return out;}
 function bodyHtml(text,terms){const parts=text.split(/ (?=[一二三四五六七八九十12345678900-9]+[ 　])/);if(parts.length<=1)return `<p>${highlight(text,terms)}</p>`;const first=parts.shift();return `<p>${highlight(first,terms)}</p><ul class="body-list">`+parts.map(p=>`<li>${highlight(p.replace(/^[一二三四五六七八九十12345678900-9]+[ 　]/,""),terms)}</li>`).join("")+`</ul>`;}
-function applyMode(){document.body.classList.remove("mode-text","mode-point");if(mode==="text")document.body.classList.add("mode-text");if(mode==="point")document.body.classList.add("mode-point");localStorage.setItem("study_mode",mode);}
-function syncMaterialOk(li,ai){
- const id=`${li}-${ai}`;
- const law=DATA[li]||{name:"教材",articles:[]}, a=(law.articles||[])[ai]||{};
- const p=JSON.parse(localStorage.getItem(QUIZ_PROG_KEY)||"null")||{};
- p.materialOk=p.materialOk||{};
- p.materialOk[id]={id,law:li,article:ai,lawName:law.name,title:a.title||"条文",day:new Date().toISOString().slice(0,10)};
- localStorage.setItem(QUIZ_PROG_KEY,JSON.stringify(p));
-}
-function toggleDone(li,ai){const id=`${li}-${ai}`;if(!done.has(id)){done.add(id);syncMaterialOk(li,ai);}save();}
+function applyMode(){document.body.classList.remove("mode-text","mode-point");if(mode==="text")document.body.classList.add("mode-text");if(mode==="point")document.body.classList.add("mode-point");storageSet("study_mode",mode);}
 function toggleBookmark(li,ai){const id=`${li}-${ai}`;bookmarks.has(id)?bookmarks.delete(id):bookmarks.add(id);save();}
-function actionButtons(li,ai){return `<div class="article-actions"><button class="mini-btn done-toggle ${isDone(li,ai)?"on":""}" data-law="${li}" data-article="${ai}" aria-label="学習済み">👍️</button></div>`;}
-function bindActionButtons(root=document){root.querySelectorAll(".done-toggle").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();toggleDone(Number(btn.dataset.law),Number(btn.dataset.article));}));}
+function actionButtons(){return '';}
+function bindActionButtons(){}
 function renderHome(){
  const list=document.getElementById("lawList");list.innerHTML="";
  DATA.forEach((law,i)=>{
-   const total=law.articles.length, learned=law.articles.filter((a,ai)=>isDone(i,ai)).length;
+   const total=law.articles.length;
    const row=document.createElement("div");row.className=`law-row group-${law.color}`;
-   row.innerHTML=`<div class="num">${i+1}</div><div class="law-main"><div class="law-title">${law.name}</div><div class="law-meta">学習済み ${learned}/${total}</div><a class="inline-quiz-link" href="${quizLinkFor(i,null)}" onclick="event.stopPropagation()">問題 ›</a></div><div class="law-meta">${total}項目 ›</div>`;
+   row.innerHTML=`<div class="num">${i+1}</div><div class="law-main"><div class="law-title">${law.name}</div><a class="inline-quiz-link" href="${quizLinkFor(i,null)}" onclick="event.stopPropagation()">問題 ›</a></div><div class="law-meta">${total}項目 ›</div>`;
    row.addEventListener("click",()=>{currentLaw=i;renderArticles();show("lawScreen")});list.appendChild(row);
  });
- renderProgress();renderHomeActions();applyMode();
+ applyMode();
 }
 function renderHomeActions(){
- let box=document.getElementById("homeActions");
- if(!box){box=document.createElement("div");box.id="homeActions";box.className="home-actions";document.getElementById("home").appendChild(box);}
- box.innerHTML=`<button id="homeDoneBtn" class="home-action-btn">👍 OK ${done.size}</button>`;
- document.getElementById("homeDoneBtn").addEventListener("click",()=>renderFilteredList("👍 OK",x=>done.has(x.id)));
+ const box=document.getElementById("homeActions");if(box)box.remove();
 }
 function renderProgress(){
  const total=flat.length;
@@ -165,7 +157,7 @@ function renderProgress(){
 
 function renderArticles(filter=""){
  const law=DATA[currentLaw];document.getElementById("lawTitle").textContent=law.name;const list=document.getElementById("articleList");list.innerHTML="";
- law.articles.forEach((a,i)=>{const hay=law.name+a.title+a.body+a.points.join("")+(a.traps||[]).join("")+(a.terms||[]).join("");if(filter&&!hay.includes(filter))return;const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title ${isDone(currentLaw,i)?"done":""}">${a.title}</span><span class="stars">${rankBadge(a.importance||a.stars)} ›</span>${actionButtons(currentLaw,i)}`;row.addEventListener("click",()=>{
+ law.articles.forEach((a,i)=>{const hay=law.name+a.title+a.body+a.points.join("")+(a.traps||[]).join("")+(a.terms||[]).join("");if(filter&&!hay.includes(filter))return;const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title">${a.title}</span><span class="stars">${rankBadge(a.importance||a.stars)} ›</span>${actionButtons(currentLaw,i)}`;row.addEventListener("click",()=>{
   if(a.redirect){openDetail(a.redirect.law,a.redirect.article)}
   else{openDetail(currentLaw,i)}
 });list.appendChild(row);});
@@ -173,7 +165,7 @@ function renderArticles(filter=""){
  const cta=document.getElementById('fieldQuizCta');
  if(cta){cta.innerHTML=quizCtaHtml(currentLaw,null,'問題');}
 }
-function renderFilteredList(title,predicate){const box=document.getElementById("searchResults");box.innerHTML="";const h=document.querySelector("#searchScreen h2");if(h)h.textContent=title;const results=flat.filter(predicate);if(!results.length){box.innerHTML='<div class="empty">該当する項目はありません。</div>';}else{const list=document.createElement("div");list.className="cat-list";results.forEach(x=>{const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${DATA[x.law].name}　${x.item.title}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;row.addEventListener("click",()=>{
+function renderFilteredList(title,predicate){const box=document.getElementById("searchResults");box.innerHTML="";const h=document.querySelector("#searchScreen h2");if(h)h.textContent=title;const results=flat.filter(predicate);if(!results.length){box.innerHTML='<div class="empty">該当する項目はありません。</div>';}else{const list=document.createElement("div");list.className="cat-list";results.forEach(x=>{const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title">${DATA[x.law].name}　${x.item.title}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;row.addEventListener("click",()=>{
   if(x.item.redirect){openDetail(x.item.redirect.law,x.item.redirect.article)}
   else{openDetail(x.law,x.article)}
 });list.appendChild(row)});box.appendChild(list);bindActionButtons(box);}show("searchScreen");}
@@ -198,16 +190,14 @@ function openDetail(li,ai){
 }); if(!(a.related||[]).length)rel.textContent="関連法令なし";
  const qcta=document.getElementById('detailQuizCta');
  if(qcta){qcta.innerHTML=quizCtaHtml(li,a,'問題');}
- updateButtons();applyMode();document.getElementById("detail").classList.remove("hidden");
+ applyMode();document.getElementById("detail").classList.remove("hidden");
 }
-function updateButtons(){const id=`${currentLaw}-${currentArticle}`;const btn=document.getElementById("markDone");if(btn){btn.textContent="👍️";btn.classList.toggle("done",done.has(id));}}
-document.getElementById("markDone").addEventListener("click",()=>toggleDone(currentLaw,currentArticle));
 document.getElementById("closeDetail").addEventListener("click",()=>document.getElementById("detail").classList.add("hidden"));
 document.getElementById("prevBtn").addEventListener("click",()=>{const idx=flat.findIndex(x=>x.law===currentLaw&&x.article===currentArticle);if(idx>0){const n=flat[idx-1];openDetail(n.law,n.article)}});
 document.getElementById("nextBtn").addEventListener("click",()=>{const idx=flat.findIndex(x=>x.law===currentLaw&&x.article===currentArticle);if(idx<flat.length-1){const n=flat[idx+1];openDetail(n.law,n.article)}});
 document.getElementById("backHome").addEventListener("click",()=>show("home"));document.getElementById("backSearchHome").addEventListener("click",()=>{const h=document.querySelector("#searchScreen h2");if(h)h.textContent="検索結果";show("home")});
 document.getElementById("searchBtn").addEventListener("click",()=>document.getElementById("searchBar").classList.toggle("open"));
-function renderSearch(q){const box=document.getElementById("searchResults");box.innerHTML="";const h=document.querySelector("#searchScreen h2");if(h)h.textContent="検索結果";if(!q){show("home");return}const groups={};flat.filter(x=>(DATA[x.law].name+x.item.title+x.item.body+x.item.points.join("")+(x.item.traps||[]).join("")+(x.item.terms||[]).join("")).includes(q)).forEach(x=>{const cat=x.item.category||"その他";(groups[cat]||(groups[cat]=[])).push(x)});Object.keys(groups).forEach(cat=>{const h=document.createElement("h3");h.className="cat-title";h.textContent=cat+"（"+groups[cat].length+"）";box.appendChild(h);const list=document.createElement("div");list.className="cat-list";groups[cat].forEach(x=>{const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${DATA[x.law].name}　${x.item.title}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;row.addEventListener("click",()=>openDetail(x.law,x.article));list.appendChild(row)});box.appendChild(list);bindActionButtons(list)});show("searchScreen");}
+function renderSearch(q){const box=document.getElementById("searchResults");box.innerHTML="";const h=document.querySelector("#searchScreen h2");if(h)h.textContent="検索結果";if(!q){show("home");return}const groups={};flat.filter(x=>(DATA[x.law].name+x.item.title+x.item.body+x.item.points.join("")+(x.item.traps||[]).join("")+(x.item.terms||[]).join("")).includes(q)).forEach(x=>{const cat=x.item.category||"その他";(groups[cat]||(groups[cat]=[])).push(x)});Object.keys(groups).forEach(cat=>{const h=document.createElement("h3");h.className="cat-title";h.textContent=cat+"（"+groups[cat].length+"）";box.appendChild(h);const list=document.createElement("div");list.className="cat-list";groups[cat].forEach(x=>{const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title">${DATA[x.law].name}　${x.item.title}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;row.addEventListener("click",()=>openDetail(x.law,x.article));list.appendChild(row)});box.appendChild(list);bindActionButtons(list)});show("searchScreen");}
 document.getElementById("searchInput").addEventListener("input",e=>renderSearch(e.target.value.trim()));
 
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}

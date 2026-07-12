@@ -59,9 +59,6 @@
     <div class="law-name" id="detailLaw"></div>
     <div class="article-top">
       <span id="detailStars" class="stars"></span>
-      <div>
-        <button id="markDone" class="mark-btn">👍️</button>
-      </div>
     </div>
     <section class="study-box text-section">
       <span class="label blue">知識</span>
@@ -87,8 +84,8 @@
   </article>
 </section>
 
-<script src="data.js?v=6"></script>
-<script src="script.js?v=6"></script>
+<script src="data.js?v=7"></script>
+<script src="script.js?v=7"></script>
 <script>
 (function(){
   const CATEGORY_NUMBERS=['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'];
@@ -131,10 +128,7 @@
 
   function displayTitle(text){return String(text||'').replace(/^(最重要条文はこちら|重要条文はこちら|頻出条文はこちら|基本条文はこちら)\s*→\s*/,'');}
   function progressHtml(items){
-    const total=items.length;
-    const doneCount=items.filter(x=>isDone(x.law,x.article)).length;
-    const rate=percent(doneCount,total);
-    return '<div class="cat-progress" aria-label="達成率 '+rate+'%"><div class="cat-progress-line"><em>'+rate+'%　'+doneCount+' / '+total+' 項目 完了</em></div><div class="cat-progress-track"><i style="width:'+rate+'%"></i></div></div>';
+    return '';
   }
   function sectionTitle(text){
     const h=document.createElement('h3');
@@ -155,10 +149,12 @@
     row.querySelectorAll(':scope > .law-meta').forEach(el=>el.remove());
     const meta=main.querySelector('.law-meta');
     if(meta)meta.remove();
-    const box=document.createElement('div');
-    box.className='material-category-progress';
-    box.innerHTML=progress;
-    main.appendChild(box);
+    if(progress){
+      const box=document.createElement('div');
+      box.className='material-category-progress';
+      box.innerHTML=progress;
+      main.appendChild(box);
+    }
     return row;
   }
   function renderImportantArticles(def){
@@ -169,7 +165,7 @@
     itemsFor(def).forEach(x=>{
       const row=document.createElement('div');
       row.className='article-row';
-      row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>`;
+      row.innerHTML=`<span class="article-title">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>`;
       row.addEventListener('click',()=>openDetail(x.law,x.article));
       list.appendChild(row);
     });
@@ -185,7 +181,7 @@
     itemsFor(def).forEach(x=>{
       const row=document.createElement('div');
       row.className='article-row';
-      row.innerHTML=`<span class="article-title ${isDone(x.law,x.article)?"done":""}">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>`;
+      row.innerHTML=`<span class="article-title">${displayTitle(x.item.title)}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>`;
       row.addEventListener('click',()=>{if(x.item.redirect){openDetail(x.item.redirect.law,x.item.redirect.article)}else{openDetail(x.law,x.article)}});
       list.appendChild(row);
     });

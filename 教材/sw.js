@@ -1,4 +1,5 @@
-const CACHE_NAME="riyoushi-9laws-final-v2-9-40";
+const CACHE_PREFIX="riyoushi-9laws-final-";
+const CACHE_NAME=CACHE_PREFIX+"v2-9-48";
 const ASSETS=["./","./index.html","./style.css?v=7","./script.js?v=7","./data.js?v=7","./manifest.json"];
 self.addEventListener("install",event=>{
   self.skipWaiting();
@@ -6,7 +7,7 @@ self.addEventListener("install",event=>{
 });
 self.addEventListener("activate",event=>{
   event.waitUntil(
-    caches.keys().then(keys=>Promise.all(keys.map(k=>k===CACHE_NAME?null:caches.delete(k)))).then(()=>self.clients.claim())
+    caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith(CACHE_PREFIX)&&k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())
   );
 });
 self.addEventListener("fetch",event=>{
