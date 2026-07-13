@@ -48,7 +48,7 @@ function storageSet(key,value){try{localStorage.setItem(key,value);return true}c
 function storageRemove(key){try{localStorage.removeItem(key);return true}catch(e){return false}}
 function safeJson(key,fallback,validate){const raw=storageGet(key);if(raw===null)return fallback;try{const value=JSON.parse(raw);return !validate||validate(value)?value:fallback}catch(e){return fallback}}
 const store={get:k=>safeJson(PREFIX+k,null,v=>v===null||(v&&typeof v==='object'&&!Array.isArray(v))),set:(k,v)=>storageSet(PREFIX+k,JSON.stringify(v))};
-const APP_VERSION='2.9.74';
+const APP_VERSION='2.9.78';
 const MATERIAL_CATEGORY_NUMBERS=['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'];
 const MATERIAL_IMPORTANT_ROWS=[
   {source:0,label:'最重要条文',importance:'most',mark:'#d93025'},
