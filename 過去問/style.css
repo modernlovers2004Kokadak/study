@@ -122,3 +122,21 @@ h1,h2,h3,h4,.law .grow>span,.qtext,.importance-badge{font-weight:400!important}
 /* v2.9.20：要復習カードの問題数文字サイズのみ調整 */
 .sm-orange em{font-size:22px}
 @media(max-width:560px){.sm-orange em{font-size:13px}}
+
+
+/* 法令問題：解説下の根拠条文・試験ポイント */
+.law-detail{margin-top:14px}
+.law-detail h3{margin:14px 0 8px;font-size:1em;font-weight:normal}
+.law-reference{margin-bottom:8px}
+.law-source{white-space:normal;overflow-wrap:anywhere;line-height:1.75}
+.law-detail ul{margin:6px 0 0;padding-left:1.4em}
+.law-detail li{margin:4px 0}
+
+/* v2.9.61：法令問題の条文要約を箇条書き表示 */
+.law-summary-list{margin:10px 0 0;padding-left:1.4em}
+.law-summary-list li{margin:6px 0;line-height:1.65}
+
+/* v2.9.64：ポイント見出しのみ淡いオレンジのラベル表示 */
+.answer .law-detail.memory-guide{display:block;background:transparent;border:0;border-radius:0;padding:0;margin:16px 0 0;line-height:1.75}
+.answer .law-detail.memory-guide h3{display:block;width:100%;margin:0 0 8px;padding:14px;background:#fff1e6;border:1px solid #f3c39b;border-radius:12px;line-height:1.2}
+.answer .law-detail.memory-guide ul{margin:6px 0 0;padding-left:1.4em}

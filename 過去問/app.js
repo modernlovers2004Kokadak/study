@@ -15,6 +15,7 @@ function baseProg(){return{done:{},answerStats:{},history:[],mistakes:{},themeSt
 const prog=()=>({...baseProg(),...(store.get('prog')||{})});
 const save=p=>store.set('prog',p);
 const pct=(n,d)=>d?Math.round(n/d*100):0;
+const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const cat=id=>CATEGORIES.find(c=>c.id===id)||CATEGORIES[0];
 const sub=id=>SUBJECTS.find(s=>s.id===id)||SUBJECTS[0];
 const shuffle=a=>[...a].sort(()=>Math.random()-.5);
@@ -217,12 +218,31 @@ function lastNDays(n){return Array.from({length:n},(_,i)=>{const d=new Date();d.
 function masterRate(p){const m=Object.values(p.mistakes||{});return m.length?pct(m.filter(x=>x.mastered).length,m.length):0}
 function dueMistakes(p){return Object.values(p.mistakes||{}).filter(m=>!m.mastered&&m.nextReview&&m.nextReview<=today())}
 function startDue(){const p=prog(),arr=needReviewList(p).map(m=>qById(m.id)).filter(Boolean).filter(q=>!isMastered(p,q));startSession(arr.length?arr:smartSession(10),'question')}
-function question(){let q=currentQ(),b=base(q),c=cat(b.gid),s=sub(q.subject),ci=state.view.choices.findIndex(x=>x.correct),ok=state.answered&&state.view.choices[state.selected]?.correct;return `<main>${header(`${state.mockEnd?'模試':'第'+(state.idx+1)+'問'} / ${state.session.length}問`,true)}${state.answered?`<div class="resultTop ${ok?'ok':'ng'}">${ok?'⭕':'❌'}<span>${ok?'正解':'不正解'}</span>${!ok?`<span>正解 ${jpNo[ci]} ${state.view.choices[ci].text}</span>`:''}</div>`:''}<section class="content questionContent ${state.answered?'withResult':''}"><div class="qcard question-card ${importanceClass(q)}"><div class="qmeta"><span>${s.name} ＞ ${c.name}</span><span>${importanceBadge(q)}・4択</span></div><p class="qtext">${b.question}</p>${state.view.choices.map((ch,i)=>choiceBtn(ch,i)).join('')}</div>${state.answered?answerBox(q,ci,b):''}</section><div class="fixedNext"><button class="${state.answered?'nextBtn':''}" onclick="${state.answered?'nextQ()':'answer()'}">${state.answered?'次へ':'解答する'}</button></div>${bottom('today')}</main>`}
-function choiceBtn(ch,i){let cls='';if(state.selected===i)cls+=' sel';if(state.answered&&ch.correct)cls+=' ok';if(state.answered&&state.selected===i&&!ch.correct)cls+=' ng';return `<button class="choice ${cls}" onclick="select(${i})"><span>${jpNo[i]}</span>${ch.text}</button>`}
-function answerBox(q,ci,b){let mem=memoryTarget(q);return `<div class="qcard answer"><h2>${mem?'ここだけ覚える':'解説'}</h2><div class="point">${b.point}</div>${mem?memoryExplain(q,b):''}<details ${mem?'':'open'}><summary>詳しい解説</summary><p>${b.exp}</p><p class="hint">国家試験では、似た用語・数字・届出先を入れ替えた選択肢に注意します。</p></details>${materialCta(q)}${evidenceStatus(q)}</div>`}
+function displayQuestionText(text){return /\na\.\s/.test(text)?text.replace(/\n{3,}(?=a\.\s)/,'\n\n'):text}
+function question(){let q=currentQ(),b=base(q),c=cat(b.gid),s=sub(q.subject),ci=state.view.choices.findIndex(x=>x.correct),ok=state.answered&&state.view.choices[state.selected]?.correct;return `<main>${header(`${state.mockEnd?'模試':'第'+(state.idx+1)+'問'} / ${state.session.length}問`,true)}${state.answered?`<div class="resultTop ${ok?'ok':'ng'}">${ok?'⭕':'❌'}<span>${ok?'正解':'不正解'}</span>${!ok?`<span>正解 ${jpNo[ci]} ${state.view.choices[ci].text}</span>`:''}</div>`:''}<section class="content questionContent ${state.answered?'withResult':''}"><div class="qcard question-card ${importanceClass(q)}"><div class="qmeta"><span>${s.name} ＞ ${c.name}</span><span>${importanceBadge(q)}・4択</span></div><p class="qtext">${displayQuestionText(b.question)}</p>${state.view.choices.map((ch,i)=>choiceBtn(ch,i)).join('')}</div>${state.answered?answerBox(q,ci,b):''}</section><div class="fixedNext"><button class="${state.answered?'nextBtn':''}" onclick="${state.answered?'nextQ()':'submitAnswer()'}">${state.answered?'次へ':'解答する'}</button></div>${bottom('today')}</main>`}
+function choiceBtn(ch,i){let cls='';if(state.selected===i)cls+=' sel';if(state.answered&&ch.correct)cls+=' ok';if(state.answered&&state.selected===i&&!ch.correct)cls+=' ng';return `<button class="choice ${cls}" onclick="selectChoice(${i})"><span>${jpNo[i]}</span>${ch.text}</button>`}
+function formatLawSourceText(text){
+  const lines=String(text||'').replace(/\r\n?/g,'\n').split('\n').map(line=>line.trim());
+  const out=[];
+  for(const line of lines){
+    if(!line){
+      if(out.length&&out[out.length-1]!==null)out.push(null);
+      continue;
+    }
+    if(!out.length||out[out.length-1]===null){out.push(line);continue;}
+    const prev=out[out.length-1];
+    const startsStructure=/^(?:（[^）]+）|第[一二三四五六七八九十百千0-9０-９]+条|[一二三四五六七八九十百千]+[ 　]|[0-9０-９]+[ 　])/.test(line);
+    if(/[。！？）]$/.test(prev)||startsStructure)out.push(line);else out[out.length-1]=prev+line;
+  }
+  return out.filter((line,i)=>line!==null||i>0&&out[i-1]!==null).map(line=>line===null?'':line);
+}
+function lawArticle(q){let m=(typeof LAW_META!=='undefined'&&LAW_META[q.id])||null;if(!m)return '';let source=formatLawSourceText(m.sourceText).map(line=>esc(line)).join('<br>');return `<section class="law-detail"><h3>該当条文（原文）</h3><div class="law-reference">${esc(m.reference)}</div><div class="law-source">${source}</div></section>`}
+function memoryGuide(q,b){let m=(typeof LAW_META!=='undefined'&&LAW_META[q.id])||null;if(m){let points=(m.examPoints||[]).map(x=>`<li>${esc(x)}</li>`).join('');return points?`<section class="law-detail memory-guide"><h3>ポイント</h3><ul>${points}</ul></section>`:''}if(memoryTarget(q))return `<section class="memory-guide">${memoryExplain(q,b)}</section>`;return `<section class="law-detail memory-guide"><h3>覚え方</h3><ul><li>${b.point}</li><li>正解語と似た語や数字の入れ替えに注意する。</li></ul></section>`}
+function lawSummary(exp){const items=String(exp||'').replace(/\r\n?/g,'\n').split(/\n+/).flatMap(block=>block.match(/[^。！？]+[。！？]?/g)||[]).map(x=>x.trim()).filter(Boolean);return `<ul class="law-summary-list">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`}
+function answerBox(q,ci,b){let m=(typeof LAW_META!=='undefined'&&LAW_META[q.id])||null;let detail=m?`<details open><summary>問題の解説</summary>${lawSummary(b.exp)}<p class="hint">国家試験では、似た用語・数字・届出先を入れ替えた選択肢に注意します。</p></details>`:`<details open><summary>詳しい解説</summary><p>${b.exp}</p><p class="hint">国家試験では、似た用語・数字・届出先を入れ替えた選択肢に注意します。</p></details>`;return `<div class="qcard answer"><h2>解説</h2><div class="point">${b.point}</div>${lawArticle(q)}${memoryGuide(q,b)}${detail}${evidenceStatus(q)}</div>`}
 function memoryExplain(q,b){const gid=groupId(q);let table='';if(gid==='infection')table='<div class="compare"><span>比較</span><span>一類：エボラ出血熱など</span><span>二類：結核など</span><span>三類：コレラなど</span></div>';if(gid==='cosmetics')table='<div class="compare"><span>比較</span><span>界面活性剤：洗浄・乳化</span><span>還元剤：パーマ第1剤</span><span>酸化剤：パーマ第2剤・染毛</span></div>';if(gid==='disinfection')table='<div class="compare"><span>比較</span><span>洗浄：汚れを落とす</span><span>消毒：微生物を減らす</span><span>血液付着：強めの消毒</span></div>';return `<div class="memo"><p><span>覚え方</span><br>${b.point}</p><p><span>ひっかけ</span><br>正解語と似た語を並べて迷わせる問題です。語尾まで確認します。</p><p><span>頻出度</span><br>★★★★★</p>${table}</div>`}
-function select(i){if(!state.answered){state.selected=i;render()}}
-function answer(){if(state.selected===null)return;record(currentQ(),!!state.view.choices[state.selected]?.correct);state.answered=true;render()}
+function selectChoice(i){if(!state.answered){state.selected=i;render()}}
+function submitAnswer(){if(state.selected===null)return;record(currentQ(),!!state.view.choices[state.selected]?.correct);state.answered=true;render()}
 function nextQ(){state.idx<state.session.length-1?route('question',{idx:state.idx+1}):route('score')}
 
 function mastered(){const p=prog(),list=masteredList(p).filter(q=>state.filter==='all'||groupId(q)===state.filter);return `<main>${header('克服済み',true)}<section class="content"><div class="chips"><button onclick="state.filter='all';render()">すべて</button>${CATEGORIES.map(c=>`<button onclick="state.filter='${c.id}';render()">${c.name}</button>`).join('')}</div>${list.length?list.map(q=>masteredRow(q,p)).join(''):'<div class="empty">克服済みの問題はありません。</div>'}</section>${bottom('mastered')}</main>`}
