@@ -3687,7 +3687,7 @@ const QUESTIONS=[
     "category": "health_promotion_act",
     "importance": 5,
     "year": "C 全面修正",
-    "q": "次の記述のうち、健康増進法における受動喫煙の定義および第一種施設について正しいものの組合せはどれか。\n\n\n\na. 人が他人の喫煙により、たばこから発生した煙にさらされること。\nb. 第一種施設には、学校、病院、児童福祉施設、国及び地方公共団体の行政機関の庁舎などが含まれる。\nc. 本人が自分の意思で喫煙することだけ。\nd. すべての飲食店だけ。",
+    "q": "次の記述のうち、健康増進法における受動喫煙の定義および第一種施設について正しいものの組合せはどれか。\n\n\n\na. 人が他人の喫煙により、たばこから発生した煙にさらされること。\nb. 第一種施設には、学校、病院、児童福祉施設、国及び地方公共団体の行政機関の庁舎などが含まれる。\nc. 受動喫煙とは、本人が自分の意思で喫煙することのみをいう。\nd. 第一種施設は、すべての飲食店に限られる。",
     "choices": [
       "b・c",
       "b・d",
@@ -5199,7 +5199,7 @@ const QUESTIONS=[
     "category": "visit",
     "importance": 5,
     "year": "C 全面修正",
-    "q": "次の記述のうち、出張理容・美容衛生管理要領における「自主管理体制」について正しいものの組合せはどれか。\n\n\n\na. 常時2人以上の従業者を出張理容または出張美容に従事させる場合は、衛生管理責任者として管理理容師または管理美容師の資格を有する者を置くことが適当である。\nb. 営業者または衛生管理責任者は、出張理容・出張美容に係る具体的な衛生管理要領を作成し、従業員に周知徹底する。\nc. 資格のない者を衛生管理責任者にしなければならない。\nd. 利用者の趣味嗜好をまとめた広告資料だけ。",
+    "q": "次の記述のうち、出張理容・美容衛生管理要領における「自主管理体制」について正しいものの組合せはどれか。\n\n\n\na. 常時2人以上の従業者を出張理容または出張美容に従事させる場合は、衛生管理責任者として管理理容師または管理美容師の資格を有する者を置くことが適当である。\nb. 営業者または衛生管理責任者は、出張理容・出張美容に係る具体的な衛生管理要領を作成し、従業員に周知徹底する。\nc. 資格のない者を衛生管理責任者にしなければならない。\nd. 自主管理体制で作成するのは、利用者の趣味嗜好をまとめた広告資料だけである。",
     "choices": [
       "a・c",
       "a・b",
@@ -5451,7 +5451,7 @@ const QUESTIONS=[
     "category": "disinfection",
     "importance": 5,
     "year": "C 全面修正",
-    "q": "次の記述のうち、消毒法分野の「紫外線消毒」について正しいものの組合せはどれか。\n\n\n\na. 30μW/㎠以上の紫外線を5分間照射する。\nb. 85μW/㎠以上の紫外線を連続して20分間以上照射する。\nc. 80℃を超える蒸気に10分間以上触れさせる。\nd. 60℃の蒸気に2分間触れさせる。",
+    "q": "次の記述のうち、血液が付着している疑いのない器具の消毒方法について正しいものの組合せはどれか。\n\n\n\na. 30μW/㎠以上の紫外線を5分間照射する。\nb. 85μW/㎠以上の紫外線を連続して20分間以上照射する。\nc. 80℃を超える蒸気に10分間以上触れさせる。\nd. 60℃の蒸気に2分間触れさせる。",
     "choices": [
       "b・d",
       "c・d",
@@ -9455,7 +9455,7 @@ const QUESTIONS=[
     "category": "history",
     "importance": 5,
     "year": "C 全面修正",
-    "q": "次の記述のうち、理容文化史分野の「総合理解」について正しいものの組合せはどれか。\n\n\n\na. 理容文化は、髪型・服飾・道具・職業・社会背景が相互に関係して発展してきた。\nb. 理容文化は道具だけで決まり、社会背景とは無関係である。\nc. 過去の髪型だけを暗記し、現代の接客やデザインには一切結びつけないため。\nd. 髪型や身だしなみが、時代の生活・社会・価値観と結びついて変化してきたことを理解するため。",
+    "q": "次の記述のうち、理容文化史分野の「総合理解」について正しいものの組合せはどれか。\n\n\n\na. 理容文化は、髪型・服飾・道具・職業・社会背景が相互に関係して発展してきた。\nb. 理容文化は道具だけで決まり、社会背景とは無関係である。\nc. 理容文化史は、過去の髪型だけを暗記し、現代の接客やデザインには一切結びつけない分野である。\nd. 理容文化史では、髪型や身だしなみが時代の生活・社会・価値観と結びついて変化してきたことを理解する。",
     "choices": [
       "a・b",
       "a・c",
@@ -11998,6 +11998,121 @@ const QUESTIONS=[
     "draftType": "standard"
   }
 ];
+
+
+// 選択肢の並べ替え後に解説内だけに残った旧番号を表示しないよう、
+// 解説文は正解位置に依存しない表現に統一する。
+const normalizeQuestionExplanation = (text) => String(text || "")
+  .replace(/正解は[①②③④]。/g, "")
+  .replace(/(?:[①②③④][・、]?){2,4}は(?=[^。]*(?:誤り|不適切|一致しない|反する|異なる|欠く|不要|ではない))/g, "他の選択肢は")
+  .replace(/\s{2,}/g, " ")
+  .trim();
+
+const combinationQuestionScopes = {
+  barber_act: "理容師法の規定",
+  order: "理容師法施行令の規定",
+  rules: "理容師法施行規則の規定",
+  infection: "感染症法の規定",
+  community: "地域保健法の規定",
+  health_promotion_act: "健康増進法の規定",
+  consumer: "消費者基本法の規定",
+  visit: "出張理容・美容衛生管理要領",
+  disinfection: "器具の消毒方法",
+  public_health: "公衆衛生",
+  skin: "皮膚と毛髪",
+  cosmetics: "香粧品化学",
+  history: "理容文化史",
+  shop: "店舗管理",
+  cut: "カッティング",
+  shaving: "シェービング"
+};
+
+// 誤答にだけ現れる極端な断定を和らげ、語調ではなく知識で判断できる選択肢にする。
+const softenDistractor = (text) => String(text)
+  .replace(/理由を問わず/g, "明確な基準を設けず")
+  .replace(/永久閉鎖/g, "長期間の閉鎖")
+  .replace(/利用者全員/g, "利用者")
+  .replace(/全員が必ず入院する/g, "多くの場合に入院する")
+  .replace(/全員が一般に入院する/g, "多くの場合に入院する")
+  .replace(/武士は全員/g, "多くの武士は")
+  .replace(/毛流は全員同じ/g, "毛流の個人差は小さい")
+  .replace(/利用者から苦情があった場合だけ届出をする/g, "利用者から苦情があった後に届出をする")
+  .replace(/温風を当てるだけの方法/g, "一定時間、温風を当てる方法")
+  .replace(/理容師免許を有する者だけから選ぶ/g, "理容師免許を有する者を優先して選ぶ")
+  .replace(/採光だけ十分なら/g, "採光が十分なら")
+  .replace(/作業前だけ洗えば/g, "作業前に洗えば")
+  .replace(/週1回だけ洗えば/g, "週1回程度洗えば")
+  .replace(/血液付着の疑いがない器具だけ煮沸できる/g, "血液付着の疑いがない器具に限り煮沸できる")
+  .replace(/完全に抜け落ちた後だけの時期/g, "完全に抜け落ちた後の時期")
+  .replace(/消毒担当者だけの問題/g, "消毒担当者を中心とした問題")
+  .replace(/売上目標だけ決め/g, "売上目標を優先して決め")
+  .replace(/毛流は側頭部にだけ存在する/g, "毛流は側頭部に主に存在する")
+  .replace(/記録はすべて不要/g, "記録は原則として省略可能")
+  .replace(/できるだけ/g, "可能な範囲で")
+  .replace(/するだけである/g, "することを主目的とする")
+  .replace(/だけである/g, "ことを主目的とする")
+  .replace(/だけからなる/g, "を主成分とする")
+  .replace(/ためだけの/g, "ことを主目的とする")
+  .replace(/ためだけ/g, "ことを主目的とする")
+  .replace(/ときだけ/g, "場合を中心に")
+  .replace(/だけ使えば/g, "を中心に用いれば")
+  .replace(/だけ使われ/g, "を中心に使われ")
+  .replace(/時間だけ合っていれば/g, "時間の基準を満たしていれば")
+  .replace(/濃度だけ合っていれば/g, "濃度の基準を満たしていれば")
+  .replace(/表面だけ温かければ/g, "表面温度が基準に達していれば")
+  .replace(/毛をそるだけなので/g, "毛をそる用途であるため")
+  .replace(/鏡で前だけ見れば/g, "鏡で正面を中心に確認すれば")
+  .replace(/誰でも/g, "一定の実務経験があれば")
+  .replace(/気分で/g, "状況に応じて")
+  .replace(/絶対に/g, "原則として")
+  .replace(/必ず/g, "一般に")
+  .replace(/常に/g, "通常")
+  .replace(/一切/g, "基本的に")
+  .replace(/まったく|全く/g, "ほとんど")
+  .replace(/すべての/g, "多くの")
+  .replace(/すべて/g, "主に")
+  .replace(/永久に/g, "長期間")
+  .replace(/自由に/g, "必要に応じて")
+  .replace(/不要である|必要ない/g, "省略できる")
+  .replace(/不要/g, "省略可能")
+  .replace(/無関係である/g, "直接の関係は薄い")
+  .replace(/独占して/g, "中心となって")
+  .replace(/だけを/g, "を主に")
+  .replace(/だけに/g, "を主に")
+  .replace(/だけで/g, "を基準に")
+  .replace(/だけが/g, "が主に")
+  .replace(/(\d+分間)だけ/g, "$1を目安に")
+  .replace(/^(.+)だけ。?$/g, "$1を主な対象とする。");
+
+for (const question of QUESTIONS) {
+  if (question.id !== 191 && /組合せはどれか。/.test(question.q)) {
+    const scope = combinationQuestionScopes[question.category];
+    if (scope) {
+      const parts = question.q.split("\n");
+      parts[0] = `次の記述のうち、${scope}について正しいものの組合せはどれか。`;
+      question.q = parts.join("\n");
+    }
+  }
+  if (/組合せはどれか。/.test(question.q)) {
+    const correctChoice = String(question.choices[question.answer]);
+    const correctStatements = new Set((correctChoice.match(/[a-d]/g) || []));
+    question.q = question.q.split("\n").map((line) => {
+      const match = line.match(/^([a-d])\.\s*/);
+      return match && !correctStatements.has(match[1]) ? softenDistractor(line) : line;
+    }).join("\n");
+  } else {
+    question.choices = question.choices.map((choice, index) =>
+      index === question.answer ? choice : softenDistractor(choice)
+    );
+  }
+  question.exp = normalizeQuestionExplanation(question.exp);
+  if (Array.isArray(question.choiceExplanations)) {
+    question.choiceExplanations = question.choices.map((_, index) => {
+      const prefix = index === question.answer ? "正しい選択肢です。" : "誤りです。";
+      return `${prefix}${question.exp}`;
+    });
+  }
+}
 
 
 // 法令問題の根拠条文・試験ポイント（添付PDF原文に基づく）
