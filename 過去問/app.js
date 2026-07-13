@@ -42,6 +42,11 @@ function materialUrl(q){
 function materialCta(q){return `<a class="material-confirm-link" href="${materialUrl(q)}">📖 教材</a>`;}
 function initFromHash(){
   const hash=decodeURIComponent(location.hash||'');
+  const direct=hash.match(/question=(\d+)/);
+  if(direct){
+    const q=qById(direct[1]);
+    if(q){startSession([q],'question');return;}
+  }
   const m=hash.match(/cat=([^&]+)/);
   if(m){
     const id=m[1];
