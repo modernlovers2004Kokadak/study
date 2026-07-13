@@ -142,8 +142,8 @@ function importanceEntries(def){
   });
   return [...map.values()];
 }
-function lawArticleHtml(entry){
-  return `<details class="top-law-article" open><summary>${escapeLawHtml(entry.reference)}</summary><div class="top-law-article-body"><section class="top-law-block"><h4>条文全文</h4>${entry.sources.map(x=>`<p class="top-law-source">${lawSourceHtml(x)}</p>`).join('')}</section><section class="top-law-block"><h4>ポイント</h4><ul class="top-law-points">${entry.points.map(x=>`<li>${escapeLawHtml(x)}</li>`).join('')}</ul></section><section class="top-law-block"><h4>解説</h4>${entry.explanations.map(x=>`<p class="top-law-explain">${escapeLawHtml(x)}</p>`).join('')}</section><section class="top-law-block"><h4>関連問題</h4><div class="top-law-related">${entry.questions.map(q=>`<a href="過去問/index.html#question=${q.id}">問題${q.id}　${escapeLawHtml(q.q.split('\n')[0])}</a>`).join('')}</div></section></div></details>`;
+function lawArticleHtml(entry,index){
+  return `<details class="top-law-article"${index===0?' open':''}><summary>${escapeLawHtml(entry.reference)}</summary><div class="top-law-article-body"><section class="top-law-block"><h4>条文全文</h4>${entry.sources.map(x=>`<p class="top-law-source">${lawSourceHtml(x)}</p>`).join('')}</section><section class="top-law-block"><h4>ポイント</h4><ul class="top-law-points">${entry.points.map(x=>`<li>${escapeLawHtml(x)}</li>`).join('')}</ul></section><section class="top-law-block"><h4>解説</h4>${entry.explanations.map(x=>`<p class="top-law-explain">${escapeLawHtml(x)}</p>`).join('')}</section><section class="top-law-block"><h4>関連問題</h4><div class="top-law-related">${entry.questions.map(q=>`<a href="過去問/index.html#question=${q.id}">問題${q.id}　${escapeLawHtml(q.q.split('\n')[0])}</a>`).join('')}</div></section></div></details>`;
 }
 function lawMaterialHtml(def,index,answered){
   const entries=lawEntries(def),questions=relatedQuestions(def),open=openLawCategory===def.group;
