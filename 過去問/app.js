@@ -28,7 +28,7 @@ function startCatSession(id){const p=prog(),arr=qsCat(id).filter(q=>!isMastered(
 const qById=id=>QUESTIONS.find(q=>q.id===Number(id));
 const memGroups=new Set(['infection','disinfection','public_health','skin','cosmetics','cut','shaving']);
 const memoryTarget=q=>memGroups.has(groupId(q))||['hygiene','health','chem','theory'].includes(q.subject);
-function evidenceStatus(q){const labels={A:'公式資料確認済み',B:'既存知識確認済み',C:'監修確認中'};return `<div class="evidence-status">根拠状態：${labels[q&&q.evidenceLevel]||'確認情報なし'}</div>`;}
+function evidenceStatus(q){const labels={A:'公式資料確認済み',B:'既存知識確認済み',C:'監修確認中'};return `<div class="evidence-status"><span>根拠状態：${labels[q&&q.evidenceLevel]||'確認情報なし'}</span><span>問題番号 ${esc(q&&q.id)}</span></div>`;}
 
 const MATERIAL_LAW_BY_GROUP={
   barber_act:3, rules:4, order:5, visit:6, infection:7, community:8, consumer:10,
@@ -223,8 +223,16 @@ function lastNDays(n){return Array.from({length:n},(_,i)=>{const d=new Date();d.
 function masterRate(p){const m=Object.values(p.mistakes||{});return m.length?pct(m.filter(x=>x.mastered).length,m.length):0}
 function dueMistakes(p){return Object.values(p.mistakes||{}).filter(m=>!m.mastered&&m.nextReview&&m.nextReview<=today())}
 function startDue(){const p=prog(),arr=needReviewList(p).map(m=>qById(m.id)).filter(Boolean).filter(q=>!isMastered(p,q));startSession(arr.length?arr:smartSession(10),'question')}
-function displayQuestionText(text){return /\na\.\s/.test(text)?text.replace(/\n{3,}(?=a\.\s)/,'\n\n'):text}
-function question(){let q=currentQ(),b=base(q),c=cat(b.gid),s=sub(q.subject),ci=state.view.choices.findIndex(x=>x.correct),ok=state.answered&&state.view.choices[state.selected]?.correct;return `<main>${header(`${state.mockEnd?'模試':'第'+(state.idx+1)+'問'} / ${state.session.length}問`,true)}${state.answered?`<div class="resultTop ${ok?'ok':'ng'}">${ok?'⭕':'❌'}<span>${ok?'正解':'不正解'}</span>${!ok?`<span>正解 ${jpNo[ci]} ${state.view.choices[ci].text}</span>`:''}</div>`:''}<section class="content questionContent ${state.answered?'withResult':''}"><div class="qcard question-card ${importanceClass(q)}"><div class="qmeta"><span>${s.name} ＞ ${c.name}</span><span>${importanceBadge(q)}・4択</span></div><p class="qtext">${displayQuestionText(b.question)}</p>${state.view.choices.map((ch,i)=>choiceBtn(ch,i)).join('')}</div>${state.answered?answerBox(q,ci,b):''}</section><div class="fixedNext"><button class="${state.answered?'nextBtn':''}" onclick="${state.answered?'nextQ()':'submitAnswer()'}">${state.answered?'次へ':'解答する'}</button></div>${bottom('today')}</main>`}
+function displayQuestionText(text){
+  const value=String(text||'');
+  const start=value.search(/\na\.\s/);
+  if(start<0)return esc(value);
+  const intro=value.slice(0,start).trim();
+  const statements=value.slice(start+1).trim().split(/\n(?=[a-d]\.\s)/).map(x=>x.trim()).filter(Boolean);
+  if(statements.length!==4)return esc(value);
+  return `${esc(intro)}<span class="combo-statements">${statements.map(x=>`<span class="combo-statement">${esc(x)}</span>`).join('')}</span>`;
+}
+function question(){let q=currentQ(),b=base(q),c=cat(b.gid),s=sub(q.subject),ci=state.view.choices.findIndex(x=>x.correct),ok=state.answered&&state.view.choices[state.selected]?.correct;return `<main>${header(`${state.mockEnd?'模試':'第'+(state.idx+1)+'問'} / ${state.session.length}問`,true)}${state.answered?`<div class="resultTop ${ok?'ok':'ng'}">${ok?'⭕':'❌'}<span>${ok?'正解':'不正解'}</span>${!ok?`<span>正解 ${jpNo[ci]} ${state.view.choices[ci].text}</span>`:''}</div>`:''}<section class="content questionContent ${state.answered?'withResult':''}"><div class="qcard question-card ${importanceClass(q)}"><div class="qmeta"><span>${s.name} ＞ ${c.name}</span><span>${importanceBadge(q)}</span></div><p class="qtext">${displayQuestionText(b.question)}</p>${state.view.choices.map((ch,i)=>choiceBtn(ch,i)).join('')}</div>${state.answered?answerBox(q,ci,b):''}</section><div class="fixedNext"><button class="${state.answered?'nextBtn':''}" onclick="${state.answered?'nextQ()':'submitAnswer()'}">${state.answered?'次へ':'解答する'}</button></div>${bottom('today')}</main>`}
 function choiceBtn(ch,i){let cls='';if(state.selected===i)cls+=' sel';if(state.answered&&ch.correct)cls+=' ok';if(state.answered&&state.selected===i&&!ch.correct)cls+=' ng';return `<button class="choice ${cls}" onclick="selectChoice(${i})"><span>${jpNo[i]}</span>${ch.text}</button>`}
 function formatLawSourceText(text){
   const lines=String(text||'').replace(/\r\n?/g,'\n').split('\n').map(line=>line.trim());
@@ -243,8 +251,53 @@ function formatLawSourceText(text){
 }
 function lawArticle(q){let m=(typeof LAW_META!=='undefined'&&LAW_META[q.id])||null;if(!m)return '';let source=formatLawSourceText(m.sourceText).map(line=>esc(line)).join('<br>');return `<section class="law-detail"><h3>該当条文（原文）</h3><div class="law-reference">${esc(m.reference)}</div><div class="law-source">${source}</div></section>`}
 function memoryGuide(q,b){let m=(typeof LAW_META!=='undefined'&&LAW_META[q.id])||null;if(m){let points=(m.examPoints||[]).map(x=>`<li>${esc(x)}</li>`).join('');return points?`<section class="law-detail memory-guide"><h3>ポイント</h3><ul>${points}</ul></section>`:''}if(memoryTarget(q))return `<section class="memory-guide">${memoryExplain(q,b)}</section>`;return `<section class="law-detail memory-guide"><h3>覚え方</h3><ul><li>${b.point}</li><li>正解語と似た語や数字の入れ替えに注意する。</li></ul></section>`}
-function lawSummary(exp){const items=String(exp||'').replace(/\r\n?/g,'\n').split(/\n+/).flatMap(block=>block.match(/[^。！？]+[。！？]?/g)||[]).map(x=>x.trim()).filter(Boolean);return `<ul class="law-summary-list">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`}
-function answerBox(q,ci,b){let m=(typeof LAW_META!=='undefined'&&LAW_META[q.id])||null;let detail=m?`<details open><summary>問題の解説</summary>${lawSummary(b.exp)}<p class="hint">国家試験では、似た用語・数字・届出先を入れ替えた選択肢に注意します。</p></details>`:`<details open><summary>詳しい解説</summary><p>${b.exp}</p><p class="hint">国家試験では、似た用語・数字・届出先を入れ替えた選択肢に注意します。</p></details>`;return `<div class="qcard answer"><h2>解説</h2><div class="point">${b.point}</div>${lawArticle(q)}${memoryGuide(q,b)}${detail}${evidenceStatus(q)}</div>`}
+function explanationItems(exp){
+  const sentences=String(exp||'').replace(/\r\n?/g,'\n').split(/\n+/).flatMap(block=>block.match(/[^。！？]+[。！？]?/g)||[]).map(x=>x.trim()).filter(Boolean);
+  const meta=/^(?:したがって|よって|以上から).*(?:正解|正しい|誤り|組合せ|組み合わせ)|^(?:正解|正しいもの|正しい記述|正しい選択肢|正しい組合せ|正しい組み合わせ)は|^(?:[a-d](?:と[a-d])?|[①-④1-4])(?:は|が|も)?(?:正しい|誤り|不正解)(?:。)?$/;
+  const cleaned=sentences.filter(x=>!meta.test(x)).map(x=>x
+    .replace(/^[a-d](?:と[a-d])?(?:は|が|も)(?:正しく|正しい|誤りであり|誤りで|誤り)[、。]*/,'')
+    .replace(/^[a-d]の/,'')
+    .replace(/^[①-④](?:[・、と][①-④])*(?:は|が|も)(?:正しく|正しい|誤りであり|誤りで|誤り)[、。]*/,'')
+    .replace(/^[①-④](?:[・、と][①-④])*はいずれも/,'')
+    .replace(/(?:ため|ので|ことから)、[^。]*とする[a-d①-④](?:と[a-d①-④])?は誤りである。?$/,'。')
+    .replace(/^(.+?)とする[a-d①-④](?:と[a-d①-④])?は誤りである。?$/,'$1とは定められていない。')
+    .replace(/^(.+?)[a-d①-④]は誤りである。?$/,'$1ことは認められない。')
+    .replace(/、?[a-d①-④]は誤り、[a-d①-④]は正しい。?$/,'。')
+    .replace(/ため、[①-④1-4]が正しい。?$/,'ことが重要である。')
+    .replace(/(?:なので|ではないので|ため)、[a-d①-④1-4](?:が|は)正しい。?$/,'。')
+    .replace(/^[a-d](?:と[a-d])?(?:は|も)/,'')
+    .replace(/^[①-④](?:[〜・、と][①-④])*(?:は|も)/,'')
+    .replace(/、[a-d①-④](?:は|も)/g,'、')
+    .replace(/誤り(?:である)?。?$/,'。')
+    .replace(/を認めることは認められない。?$/,'は認められない。')
+    .replace(/との混同であり。?$/,'と混同している。')
+    .replace(/の説明であり。?$/,'の説明に当たる。')
+    .replace(/の内容であり。?$/,'の内容に当たる。')
+    .replace(/の働きであり。?$/,'の働きである。')
+    .replace(/短時間の清拭であり。?$/,'短時間の清拭にとどまる。')
+    .replace(/おそれがあり。?$/,'おそれがある。')
+    .replace(/としており。?$/,'としている。')
+    .replace(/否定しており。?$/,'否定している。')
+    .replace(/限定しており。?$/,'限定している。')
+    .replace(/取り違えており。?$/,'取り違えている。')
+    .replace(/省略しており。?$/,'省略している。')
+    .replace(/無視しており。?$/,'無視している。')
+    .replace(/用いており。?$/,'用いている。')
+    .replace(/委ねており。?$/,'委ねている。')
+    .replace(/なので。?$/,'ため、基準と異なる。')
+    .replace(/説明ため、/,'説明に当たるため、')
+    .replace(/ためのもの。?$/,'ためのものではない。')
+    .replace(/であり。?$/,'である。')
+    .replace(/おり。?$/,'いる。')
+    .replace(/ため。$/,'。')
+    .replace(/^適切性又は迅速性の一方を欠く①・④や、救済の対象を事業者の損害とする③は誤りである。?$/,'適切性又は迅速性の一方を欠く記述や、救済の対象を事業者の損害とする記述は、法の趣旨と異なる。')
+    .replace(/^適切性又は迅速性の一方を欠く①・④や、救済の対象を事業者の損害とは定められていない。?$/,'適切性又は迅速性の一方を欠く記述や、救済の対象を事業者の損害とする記述は、法の趣旨と異なる。')
+    .replace(/^②は刃が引っかかりやすく、③は過度、④は誤りである。?$/,'刃の動きを止める操作、過度な皮膚緊張、毛流を確認しない操作は、皮膚損傷の原因になる。')
+    .replace(/^、/,'').trim()).filter(x=>x&&!meta.test(x));
+  return cleaned.length?cleaned:['この問題で問われている用語、条件及び適用範囲を整理して覚える。'];
+}
+function explanationSummary(exp){return `<ul class="law-summary-list">${explanationItems(exp).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`}
+function answerBox(q,ci,b){let m=(typeof LAW_META!=='undefined'&&LAW_META[q.id])||null;let detail=`<details open><summary>${m?'問題の解説':'詳しい解説'}</summary>${explanationSummary(b.exp)}</details>`;let body=m?`${lawArticle(q)}${detail}${memoryGuide(q,b)}`:`${memoryGuide(q,b)}${detail}`;return `<div class="qcard answer"><h2>解説</h2><div class="point">${b.point}</div>${body}${evidenceStatus(q)}</div>`}
 function memoryExplain(q,b){const gid=groupId(q);let table='';if(gid==='infection')table='<div class="compare"><span>比較</span><span>一類：エボラ出血熱など</span><span>二類：結核など</span><span>三類：コレラなど</span></div>';if(gid==='cosmetics')table='<div class="compare"><span>比較</span><span>界面活性剤：洗浄・乳化</span><span>還元剤：パーマ第1剤</span><span>酸化剤：パーマ第2剤・染毛</span></div>';if(gid==='disinfection')table='<div class="compare"><span>比較</span><span>洗浄：汚れを落とす</span><span>消毒：微生物を減らす</span><span>血液付着：強めの消毒</span></div>';return `<div class="memo"><p><span>覚え方</span><br>${b.point}</p><p><span>ひっかけ</span><br>正解語と似た語を並べて迷わせる問題です。語尾まで確認します。</p><p><span>頻出度</span><br>★★★★★</p>${table}</div>`}
 function selectChoice(i){if(!state.answered){state.selected=i;render()}}
 function submitAnswer(){if(state.selected===null)return;record(currentQ(),!!state.view.choices[state.selected]?.correct);state.answered=true;render()}
