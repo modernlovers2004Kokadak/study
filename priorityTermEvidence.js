@@ -21,4 +21,4 @@ document.querySelectorAll('details.qa').forEach(detail=>{
 });
 })();
 // 用語集本体の大規模HTMLを変更せず、追加監修データを読み込む。
-(()=>{const script=document.createElement('script');script.src='glossaryCompleteness.js';document.body.appendChild(script)})();
+(()=>{const script=document.createElement('script');script.src='glossaryCompleteness.js';script.onload=()=>{const categoryScript=document.createElement('script');categoryScript.src='glossaryCategories16.js';document.body.appendChild(categoryScript)};document.body.appendChild(script)})();
