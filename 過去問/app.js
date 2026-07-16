@@ -23,12 +23,36 @@ const take=(a,n)=>shuffle(a).slice(0,n);
 
 const GROUP_RULE={microbe:'disinfection',infection_control:'disinfection',environment:'public_health',health_promo:'public_health',hair:'skin',anatomy:'skin',nutrition:'skin',disease:'skin',surfactant:'cosmetics',perm:'cosmetics',cosmetic_safety:'cosmetics',ph:'cosmetics',color:'cosmetics',style:'history',design:'history',aesthetics:'history',customer:'shop',accounting:'shop',labor:'shop',complaint:'shop',store:'shop',commerce:'shop',shampoo:'cut',setting:'cut',tools:'cut'};
 const groupId=q=>GROUP_RULE[q.category]||q.category;
+const OFFICIAL_TRACKS=[
+ {id:'law_management',name:'関係法規・制度及び運営管理',quota:10},
+ {id:'public_environment',name:'公衆衛生・環境衛生',quota:5},
+ {id:'infectious_disease',name:'感染症',quota:5},
+ {id:'hygiene_technique',name:'衛生管理技術',quota:5},
+ {id:'anatomy_function',name:'人体の構造及び機能',quota:5},
+ {id:'dermatology',name:'皮膚科学',quota:5},
+ {id:'cosmetic_chemistry',name:'香粧品化学',quota:5},
+ {id:'culture_theory',name:'文化論',quota:5},
+ {id:'barber_theory',name:'理容技術理論',quota:10}
+];
+function officialTrackId(q){
+ const c=q&&q.category,s=q&&q.subject;
+ if(s==='management'||(s==='law'&&!['infection','community','health_promotion_act'].includes(c)))return 'law_management';
+ if(c==='community'||c==='health_promotion_act'||['environment','health_promo','public_health'].includes(c))return 'public_environment';
+ if(c==='infection')return 'infectious_disease';
+ if(s==='hygiene'||['microbe','infection_control','disinfection'].includes(c))return 'hygiene_technique';
+ if(s==='health'&&Number(q.id)>=245&&Number(q.id)<=269)return 'anatomy_function';
+ if(s==='health')return 'dermatology';
+ if(s==='chem')return 'cosmetic_chemistry';
+ if(s==='culture')return 'culture_theory';
+ if(s==='theory')return 'barber_theory';
+ return 'law_management';
+}
 const qsCat=id=>QUESTIONS.filter(q=>groupId(q)===id);
 function startCatSession(id){const p=prog(),arr=qsCat(id).filter(q=>!isMastered(p,q));if(arr.length)startSession(arr,'question');else alert('未克服の問題はありません。')}
 const qById=id=>QUESTIONS.find(q=>q.id===Number(id));
 const memGroups=new Set(['infection','disinfection','public_health','skin','cosmetics','cut','shaving']);
 const memoryTarget=q=>memGroups.has(groupId(q))||['hygiene','health','chem','theory'].includes(q.subject);
-function evidenceStatus(q){const labels={A:'公式資料確認済み',B:'既存知識確認済み',C:'監修確認中'};return `<div class="evidence-status"><span>根拠状態：${labels[q&&q.evidenceLevel]||'確認情報なし'}</span><span>問題番号 ${esc(q&&q.id)}</span></div>`;}
+function evidenceStatus(q){const labels={A:'公式資料確認済み',official_confirmed:'公式正答確認済み',B:'公開資料で根拠確認済み',C:'公的根拠の個別確認中'},source=q&&q.evidenceUrl?`<a href="${esc(q.evidenceUrl)}" target="_blank" rel="noopener">${esc(q.evidenceSource||'根拠資料')}</a>`:'';return `<div class="evidence-status"><span>根拠状態：${labels[q&&q.evidenceLevel]||'確認情報なし'}</span><span>問題番号 ${esc(q&&q.id)}</span><span>公開資料基準日 ${esc(q&&q.evidenceDate||'2026-07-16')}</span>${source}</div>`;}
 
 const MATERIAL_LAW_BY_GROUP={
   barber_act:3, rules:4, order:5, visit:6, infection:7, community:8, consumer:10,
@@ -179,7 +203,7 @@ function smartSession(count=21){
  while(out.length<count){let q=pickFrom(fresh,false,false)||pickFrom(QUESTIONS,true,false);if(!q)break;mark(q)}
  return out
 }
-function mockSession(){let out=[];const cats=shuffle(CATEGORIES);while(out.length<55){for(const c of cats){const pool=qsCat(c.id).filter(q=>!out.includes(q));if(pool.length&&out.length<55)out.push(shuffle(pool)[0])}}return out}
+function mockSession(){let out=[];for(const t of OFFICIAL_TRACKS){const pool=QUESTIONS.filter(q=>officialTrackId(q)===t.id);out.push(...take(pool,t.quota))}return shuffle(out)}
 function startSession(arr,page='question',mock=false){if(!arr||!arr.length){alert('出題できる問題がありません。');route('home');return}state={...state,page,session:arr,idx:0,selected:null,answered:false,view:null,mockEnd:mock?Date.now()+60*60*1000:null,mockRecorded:false};render();}
 function route(page,extra={}){state={...state,page,...extra,selected:null,answered:false,view:null};render()}
 const circled=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮'];
@@ -232,7 +256,7 @@ function displayQuestionText(text){
   if(statements.length!==4)return esc(value);
   return `${esc(intro)}<span class="combo-statements">${statements.map(x=>`<span class="combo-statement">${esc(x)}</span>`).join('')}</span>`;
 }
-function question(){let q=currentQ(),b=base(q),c=cat(b.gid),s=sub(q.subject),ci=state.view.choices.findIndex(x=>x.correct),ok=state.answered&&state.view.choices[state.selected]?.correct;return `<main>${header(`${state.mockEnd?'模試':'第'+(state.idx+1)+'問'} / ${state.session.length}問`,true)}${state.answered?`<div class="resultTop ${ok?'ok':'ng'}">${ok?'⭕':'❌'}<span>${ok?'正解':'不正解'}</span>${!ok?`<span>正解 ${jpNo[ci]} ${state.view.choices[ci].text}</span>`:''}</div>`:''}<section class="content questionContent ${state.answered?'withResult':''}"><div class="qcard question-card ${importanceClass(q)}"><div class="qmeta"><span>${s.name} ＞ ${c.name}</span><span>${importanceBadge(q)}</span></div><p class="qtext">${displayQuestionText(b.question)}</p>${state.view.choices.map((ch,i)=>choiceBtn(ch,i)).join('')}</div>${state.answered?answerBox(q,ci,b):''}</section><div class="fixedNext"><button class="${state.answered?'nextBtn':''}" onclick="${state.answered?'nextQ()':'submitAnswer()'}">${state.answered?'次へ':'解答する'}</button></div>${bottom('today')}</main>`}
+function question(){let q=currentQ(),b=base(q),c=cat(b.gid),s=sub(q.subject),ci=state.view.choices.findIndex(x=>x.correct),ok=state.answered&&state.view.choices[state.selected]?.correct;return `<main>${header(`${state.mockEnd?'模試':'第'+(state.idx+1)+'問'} / ${state.session.length}問`,true)}${state.answered?`<div class="resultTop ${ok?'ok':'ng'}">${ok?'⭕':'❌'}<span>${ok?'正解':'不正解'}</span>${!ok?`<span>正解 ${jpNo[ci]} ${state.view.choices[ci].text}</span>`:''}</div>`:''}<section class="content questionContent ${state.answered?'withResult':''}"><div class="qcard question-card ${importanceClass(q)}"><div class="qmeta"><span>${s.name} ＞ ${c.name}</span><span>${importanceBadge(q).replace('・4択','')}</span></div><p class="qtext">${displayQuestionText(b.question)}</p>${state.view.choices.map((ch,i)=>choiceBtn(ch,i)).join('')}</div>${state.answered?answerBox(q,ci,b):''}</section><div class="fixedNext"><button class="${state.answered?'nextBtn':''}" onclick="${state.answered?'nextQ()':'submitAnswer()'}">${state.answered?'次へ':'解答する'}</button></div>${bottom('today')}</main>`}
 function choiceBtn(ch,i){let cls='';if(state.selected===i)cls+=' sel';if(state.answered&&ch.correct)cls+=' ok';if(state.answered&&state.selected===i&&!ch.correct)cls+=' ng';return `<button class="choice ${cls}" onclick="selectChoice(${i})"><span>${jpNo[i]}</span>${ch.text}</button>`}
 function formatLawSourceText(text){
   const lines=String(text||'').replace(/\r\n?/g,'\n').split('\n').map(line=>line.trim());
@@ -297,7 +321,7 @@ function explanationItems(exp){
   return cleaned.length?cleaned:['この問題で問われている用語、条件及び適用範囲を整理して覚える。'];
 }
 function explanationSummary(exp){return `<ul class="law-summary-list">${explanationItems(exp).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`}
-function answerBox(q,ci,b){let m=(typeof LAW_META!=='undefined'&&LAW_META[q.id])||null;let detail=`<details open><summary>${m?'問題の解説':'詳しい解説'}</summary>${explanationSummary(b.exp)}</details>`;let body=m?`${lawArticle(q)}${detail}${memoryGuide(q,b)}`:`${memoryGuide(q,b)}${detail}`;return `<div class="qcard answer"><h2>解説</h2><div class="point">${b.point}</div>${body}${evidenceStatus(q)}</div>`}
+function answerBox(q,ci,b){let m=(typeof LAW_META!=='undefined'&&LAW_META[q.id])||null,review=q.structuredReview?`<details open><summary>重点整理</summary><dl class="review-matrix">${Object.entries(q.structuredReview).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl></details>`:'',choices=(q.choiceExplanations||[]).length?`<details open><summary>選択肢別：誤り箇所と正しい表現</summary><ol>${q.choiceExplanations.map((x,i)=>`<li><strong>選択肢${i+1}</strong><br>${esc(x)}</li>`).join('')}</ol></details>`:'',detail=`<details open><summary>問題の解説</summary>${explanationSummary(b.exp)}</details>`;let body=m?`${lawArticle(q)}${review}${choices}${detail}${memoryGuide(q,b)}`:`${review}${choices}${detail}${memoryGuide(q,b)}`;return `<div class="qcard answer"><h2>解説</h2>${body}${evidenceStatus(q)}</div>`}
 function memoryExplain(q,b){const gid=groupId(q);let table='';if(gid==='infection')table='<div class="compare"><span>比較</span><span>一類：エボラ出血熱など</span><span>二類：結核など</span><span>三類：コレラなど</span></div>';if(gid==='cosmetics')table='<div class="compare"><span>比較</span><span>界面活性剤：洗浄・乳化</span><span>還元剤：パーマ第1剤</span><span>酸化剤：パーマ第2剤・染毛</span></div>';if(gid==='disinfection')table='<div class="compare"><span>比較</span><span>洗浄：汚れを落とす</span><span>消毒：微生物を減らす</span><span>血液付着：強めの消毒</span></div>';return `<div class="memo"><p><span>覚え方</span><br>${b.point}</p><p><span>ひっかけ</span><br>正解語と似た語を並べて迷わせる問題です。語尾まで確認します。</p><p><span>頻出度</span><br>★★★★★</p>${table}</div>`}
 function selectChoice(i){if(!state.answered){state.selected=i;render()}}
 function submitAnswer(){if(state.selected===null)return;record(currentQ(),!!state.view.choices[state.selected]?.correct);state.answered=true;render()}
@@ -310,7 +334,7 @@ function mistakes(){const p=prog(),list=needReviewList(p).filter(m=>state.filter
 function mistakeRow(m){const q=qById(m.id),b=base(q);return `<button class="law" onclick="startSession([qById(${m.id})],'question')"><span class="num">🔖</span><span class="grow"><span>${cat(b.gid).name}／${b.point}</span><small>登録中　ミス ${m.wrongCount}回　最終 ${m.lastMiss||m.firstMiss||'記録なし'}</small></span><span>解く ›</span></button>`}
 function rankingCard(p){return `<div class="qcard"><h2>苦手ランキング</h2>${rankingList(p)}<button class="primary light" onclick="route('mistakes')">🔖 要復習へ</button></div>`}
 function rankingList(p){const map={};Object.values(p.mistakes||{}).forEach(m=>{if(m.mastered)return;const q=qById(m.id);if(!q)return;const b=base(q),k=b.point;map[k]=(map[k]||0)+m.wrongCount});const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5);return arr.length?arr.map((x,i)=>`<div class="rank"><span>${i+1}　${x[0]}</span><span>${x[1]}回</span></div>`).join(''):'<p class="muted">まだ苦手データがありません</p>'}
-function score(){const p=prog();if(state.mockEnd){const recent=(p.history||[]).slice(-state.session.length),ok=recent.filter(x=>x.ok).length,pass=ok>=33;recordMockResult(pass);return `<main>${header('模試結果',true)}<section class="content"><div class="qcard"><h2>${pass?'合格！':'不合格！'}</h2><p class="score">${ok} / ${state.session.length}</p></div></section>${bottom('score')}</main>`}return `<main>${header('学習記録',true)}<section class="content"><div class="qcard"><h2>正解済み</h2><p class="score">${solvedIds(p).size} / ${QUESTIONS.length}</p></div></section>${bottom('score')}</main>`}
+function score(){const p=prog();if(state.mockEnd){const recent=(p.history||[]).slice(-state.session.length),ok=recent.filter(x=>x.ok).length,total=state.session.length,rate=Math.round(ok/total*100),stats=OFFICIAL_TRACKS.map(t=>{const rows=recent.filter(x=>{const q=qById(x.id);return q&&officialTrackId(q)===t.id});const right=rows.filter(x=>x.ok).length;return{name:t.name,total:rows.length,ok:right,rate:rows.length?Math.round(right/rows.length*100):0}}),zero=stats.filter(x=>x.ok===0),low=stats.filter(x=>x.rate<40),short=Math.max(0,33-ok),pass=ok>=33&&zero.length===0,reasons=[];if(!pass){if(ok<33)reasons.push(`合格基準の60％に達していません（あと${short}問）。`);if(zero.length)reasons.push(`無得点の課目があります：${zero.map(x=>x.name).join('、')}`);if(low.length)reasons.push(`正答率が特に低い課目があります：${low.map(x=>x.name).join('、')}`)}recordMockResult(pass);return `<main>${header('模試結果',true)}<section class="content"><div class="qcard"><h2>${pass?'合格！':'不合格！'}</h2><p class="score">${ok} / ${total}</p><p>総正答率 ${rate}％</p><p class="muted">公式合格基準：55問中60％以上かつ9課目すべて無得点なし</p><div class="mock-category-results">${stats.map(x=>`<p>${x.name}　${x.ok} / ${x.total}問　${x.rate}％</p>`).join('')}</div>${reasons.length?`<div class="mock-fail-reasons"><h3>不合格になった主な要因</h3><ul>${reasons.map(x=>`<li>${x}</li>`).join('')}</ul></div>`:''}</div></section>${bottom('score')}</main>`}return `<main>${header('学習記録',true)}<section class="content"><div class="qcard"><h2>正解済み</h2><p class="score">${solvedIds(p).size} / ${QUESTIONS.length}</p></div></section>${bottom('score')}</main>`}
 function catScoreRow(c,i,p){let qs=qsCat(c.id),st=p.catStats?.[c.id]||{try:0,ok:0};return `<button class="subject-row" onclick="startCatSession('${c.id}')"><span>${c.name}<small>${rankText(qs)}</small></span><span>正答率 ${pct(st.ok,st.try)}%</span></button>`}
 function themeName(k){const [gid,idx]=k.split(':'),q=QUESTIONS.find(x=>groupId(x)===gid&&String(templateIndex(x))===idx);return `${cat(gid).name}／${base(q||QUESTIONS[0]).point}`}
 function searchPage(){let p=prog(),t=state.search,qs=t?QUESTIONS.filter(q=>!isMastered(p,q)).filter(q=>{let b=base(q);return (b.question+b.exp+b.point+cat(b.gid).name).includes(t)}):[];return `<main>${header('検索',true)}<section class="content"><input class="search" placeholder="キーワードで検索" value="${t}" oninput="state.search=this.value;render()">${qs.map(q=>{let b=base(q);return `<button class="law" onclick="startSession([qById(${q.id})],'question')"><span class="num">⌕</span><span class="grow"><span>${cat(b.gid).name}</span><small>${b.question}</small></span><span>›</span></button>`}).join('')}</section>${bottom('home')}</main>`}

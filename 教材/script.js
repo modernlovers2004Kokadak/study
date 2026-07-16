@@ -170,7 +170,7 @@ function renderFilteredList(title,predicate){const box=document.getElementById("
   else{openDetail(x.law,x.article)}
 });list.appendChild(row)});box.appendChild(list);bindActionButtons(box);}show("searchScreen");}
 function openDetail(li,ai){
- currentLaw=li;currentArticle=ai;const law=DATA[li],a=law.articles[ai];document.getElementById("detailLaw").textContent=law.name+"　"+(a.category||"");document.getElementById("detailTitle").textContent=a.title;document.getElementById("detailStars").innerHTML=rankBadge(a.importance||a.stars);document.getElementById("detailBody").innerHTML=bodyHtml(a.body,a.terms||[]);
+ currentLaw=li;currentArticle=ai;const law=DATA[li],a=law.articles[ai];document.getElementById("detailLaw").textContent=law.name+"　"+(a.category||"");document.getElementById("detailTitle").textContent=a.title;document.getElementById("detailStars").innerHTML=rankBadge(a.importance||a.stars);const review=a.reviewStatus?`<aside class="source-note"><strong>照合状態：${escapeHtml(a.reviewStatus)}</strong><br><a href="${escapeHtml(a.reviewUrl)}" target="_blank" rel="noopener">${escapeHtml(a.reviewSource)}</a><br>基準日：${escapeHtml(a.reviewDate)}<br>${escapeHtml(a.reviewNote||'')}</aside>`:'';document.getElementById("detailBody").innerHTML=bodyHtml(a.body,a.terms||[])+review;
  let ul=document.getElementById("detailPoints");ul.innerHTML="";(a.points||[]).forEach(p=>{const item=document.createElement("li");item.innerHTML=highlight(p,a.terms||[]);ul.appendChild(item)});
  ul=document.getElementById("detailTraps");ul.innerHTML="";(a.traps||[]).forEach(p=>{const item=document.createElement("li");item.innerHTML=highlight(p,a.terms||[]);ul.appendChild(item)});
  const rel=document.getElementById("relatedLinks");rel.innerHTML="";(a.related||[]).forEach(r=>{

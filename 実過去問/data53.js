@@ -5,7 +5,7 @@ const EXAM53={
 const q53=(n,category,stem,choices,answer,page,extra={})=>EXAM53.questions.push({
   id:`53-${String(n).padStart(2,'0')}`,round:53,number:n,category,stem,choices,answer:answer-1,
   sourcePage:page,format:extra.format||'single',statements:extra.statements||null,image:extra.image||null,
-  explanation:extra.explanation||'解説は原本と現行資料を照合して整備中です。',
+  explanation:extra.explanation||'正答は理容師美容師試験研修センター公開の当該回公式PDFで確認済みです。各選択肢の詳細理由を示す公式解説は公開されていないため、公的根拠だけで確定できない説明は追加していません。',
   choiceExplanations:extra.choiceExplanations||[],point:extra.point||category,evidenceStatus:'原本確認済み・解説監修中'
 });
 

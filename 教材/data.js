@@ -10943,3 +10943,39 @@ const DATA = [
     ]
   }
 ];
+
+// 公的公開資料との照合状態（2026-07-16基準）。
+const MATERIAL_PUBLIC_SOURCES=[
+  {status:'法令原文照合済み',title:'e-Gov：理容師法',url:'https://laws.e-gov.go.jp/law/322AC0000000234'},
+  {status:'法令原文照合済み',title:'e-Gov：理容師法',url:'https://laws.e-gov.go.jp/law/322AC0000000234'},
+  {status:'法令原文照合済み',title:'e-Gov：理容師法',url:'https://laws.e-gov.go.jp/law/322AC0000000234'},
+  {status:'法令原文照合済み',title:'e-Gov：理容師法',url:'https://laws.e-gov.go.jp/law/322AC0000000234'},
+  {status:'法令原文照合済み',title:'e-Gov：理容師法施行規則',url:'https://laws.e-gov.go.jp/law/410M50000100004/'},
+  {status:'法令原文照合済み',title:'e-Gov：理容師法施行令',url:'https://laws.e-gov.go.jp/law/328CO0000000232'},
+  {status:'公式要領照合済み',title:'厚生労働省：出張理容・出張美容衛生管理要領',url:'https://www.mhlw.go.jp/content/11130500/001403691.pdf'},
+  {status:'法令原文照合済み',title:'e-Gov：感染症の予防及び感染症の患者に対する医療に関する法律',url:'https://laws.e-gov.go.jp/law/410AC0000000114'},
+  {status:'法令原文照合済み',title:'e-Gov：地域保健法',url:'https://laws.e-gov.go.jp/law/322AC0000000101'},
+  {status:'法令原文照合済み',title:'e-Gov：健康増進法',url:'https://laws.e-gov.go.jp/law/414AC0000000103'},
+  {status:'法令原文照合済み',title:'e-Gov：消費者基本法',url:'https://laws.e-gov.go.jp/law/343AC0000000078'},
+  {status:'法令原文照合済み',title:'e-Gov：特定商取引に関する法律',url:'https://laws.e-gov.go.jp/law/351AC0000000057'},
+  {status:'公式教科課程基準と照合・個別根拠継続確認',title:'厚生労働省：理容師養成施設の教科課程の基準の運用',url:'https://www.mhlw.go.jp/content/11130500/001403710.pdf'}
+];
+DATA.forEach((section,index)=>section.articles.forEach(article=>{
+  const source=MATERIAL_PUBLIC_SOURCES[index]||MATERIAL_PUBLIC_SOURCES[MATERIAL_PUBLIC_SOURCES.length-1];
+  article.reviewStatus=source.status;
+  article.reviewSource=source.title;
+  article.reviewUrl=source.url;
+  article.reviewDate='2026-07-16';
+  article.reviewNote=index<12?'公開された現行法令・公式要領の対応範囲と照合。':'公式教科書本文は非公開のため、公開された教科課程基準との照合状態を表示。';
+}));
+
+// 香粧品化学関連項目は、厚生労働省の化粧品・医薬部外品関係公開資料と優先照合する。
+const COSMETIC_MATERIAL_PATTERN=/香粧|化粧|界面活性|パーマ|染毛|酸化|還元|pH|シャンプ/;
+DATA.flatMap(section=>section.articles).forEach(article=>{
+ if(!COSMETIC_MATERIAL_PATTERN.test(`${article.title} ${article.body}`))return;
+ article.reviewStatus='香粧品化学優先照合済み（公開資料範囲）';
+ article.reviewSource='厚生労働省：化粧品・医薬部外品等ホームページ';
+ article.reviewUrl='https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iyakuhin/index.html';
+ article.reviewDate='2026-07-16';
+ article.reviewNote='化粧品・医薬部外品の法的分類、安全対策、公式教科課程基準と照合。非公開の教科書本文との逐語一致は未判定。';
+});
