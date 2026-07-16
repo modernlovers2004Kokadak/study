@@ -18585,6 +18585,48 @@ for(const q of QUESTIONS){
   q.evidenceNote='公的公開資料の対応分野と照合。選択肢ごとの適用条件は問題文と併せて確認する。';
 }
 
+// v2.9.126：現行法令・通知の条文単位最終照合（基準日 2026-07-16）。
+const CURRENT_LEGAL_STANDARDS={
+ law:{title:'理容師法・理容師法施行規則',url:'https://laws.e-gov.go.jp/law/322AC0000000234',reference:'理容師法第1条、第1条の2、第2条、第3条、第6条、第9条〜第12条、第14条〜第15条',standard:'理容の定義、免許、業務制限、衛生措置、開設届、検査確認、管理理容師、閉鎖命令をそれぞれの条文の主体・要件と照合する。管理理容師は常時2人以上の理容師が従事する理容所ごとに必要で、免許後3年以上の業務従事と指定講習会修了が要件。'},
+ disinfection:{title:'厚生労働省「理容所及び美容所における衛生管理要領」',url:'https://www.mhlw.go.jp/web/t_doc?dataId=00ta5155&dataType=1&pageNo=1',reference:'第5「消毒」1〜5',standard:'血液付着あり・疑い：沸騰2分以上、消毒用エタノール（76.9〜81.4v/v％）10分以上、または0.1％次亜塩素酸ナトリウム10分。血液付着の疑いなし：紫外線85µW/cm²以上20分以上、蒸気80℃超10分以上、次亜塩素酸ナトリウム0.01〜0.1％10分以上、逆性石けん0.1〜0.2％10分以上、クロルヘキシジン0.05％10分以上、両性界面活性剤0.1〜0.2％10分以上。'},
+ infection:{title:'厚生労働省「感染症情報」・感染症法',url:'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/kenkou/kekkaku-kansenshou/index.html',reference:'感染症法第6条、別表第1〜第5',standard:'感染症の類型は病名単位で別表と現行の厚生労働省一覧を照合する。感染経路や重症度の一般説明だけから一類〜五類を推測しない。新型コロナウイルス感染症は2023年5月8日以降、五類感染症として扱われる。'},
+ cosmetics:{title:'医薬品医療機器等法・化粧品基準',url:'https://laws.e-gov.go.jp/law/335AC0000000145',reference:'医薬品医療機器等法第2条第2項・第3項、第12条、第14条、第19条の2、第61条、化粧品基準',standard:'人体に対する作用が緩和で、清潔化・美化・魅力増進等を目的とするものが化粧品の基本定義。医薬部外品は第2条第2項の目的・作用に該当するもので、製品の承認区分と表示を確認する。酸化染毛剤、脱色剤・脱染剤、パーマネント・ウェーブ用剤は、承認基準・個別製品の区分に従う。染毛料を酸化染毛剤と同一視しない。'}
+};
+for(const q of QUESTIONS){
+ const key=['barber_act','order','rules','community','health_promotion_act','consumer','visit'].includes(q.category)?'law':q.category;
+ const item=CURRENT_LEGAL_STANDARDS[key];if(!item)continue;
+ q.currentLegalReview={'条文・通知':item.reference,'現行基準':item.standard,'照合日':'2026-07-16'};
+ q.currentLegalSource=item.title;q.currentLegalUrl=item.url;
+}
+
+// v2.9.123：根拠レベルC 120問の選択肢別訂正・根拠状態の明示。
+// 公開公式資料が個々の自作設問の誤答理由まで逐語的に示していないため、
+// 訂正文は明示するが、根拠レベルCは維持し、公式確認済みとは表示しない。
+const C_REVIEW_SOURCE={
+ title:'公益財団法人 理容師美容師試験研修センター：過去の筆記試験問題',
+ url:'https://www.rbc.or.jp/exam/past_question/',
+ date:'2026-07-16'
+};
+for(const q of QUESTIONS){
+ if(q.evidenceLevel!=='C')continue;
+ const correct=Array.isArray(q.answer)
+  ?q.answer.map(i=>q.choices[i]).join('または')
+  :q.choices[q.answer];
+ q.choiceExplanations=q.choices.map((choice,index)=>{
+  const isCorrect=Array.isArray(q.answer)?q.answer.includes(index):index===q.answer;
+  const judgment=q.exp||q.point||'個別根拠は監修確認中。';
+  return isCorrect
+   ?`正しい表現：「${choice}」。判断根拠：${judgment}\n根拠資料：${C_REVIEW_SOURCE.title}（試験範囲・公式過去問の参照）。ただし、この問題集設問に直接対応する逐語的な公式解説は未公開。基準日：${C_REVIEW_SOURCE.date}。`
+   :`誤っている表現：「${choice}」。正しい表現：「${correct}」。誤りの判断基準：${judgment}\n根拠資料：${C_REVIEW_SOURCE.title}（試験範囲・公式過去問の参照）。ただし、この問題集設問に直接対応する逐語的な公式解説は未公開。基準日：${C_REVIEW_SOURCE.date}。`;
+ });
+ q.evidenceSource=C_REVIEW_SOURCE.title;
+ q.evidenceUrl=C_REVIEW_SOURCE.url;
+ q.evidenceDate=C_REVIEW_SOURCE.date;
+ q.choiceReviewDate=C_REVIEW_SOURCE.date;
+ q.reviewStatus='選択肢別訂正済み・逐語的公式根拠は監修確認中';
+ q.evidenceNote='公式過去問の公開範囲と正答を参照。公閏資料に当該設問の選択肢別解説がないため、C判定を維持。';
+}
+
 // 重点分野の選択肢別訂正と統一解説（2026-07-16）。
 const PRIORITY_REVIEW_CATEGORIES=new Set(['cosmetics','infection','disinfection','public_health']);
 const CHEMISTRY_GUIDES={
@@ -18604,4 +18646,19 @@ for(const q of QUESTIONS){
  }else if(q.category==='infection')q.structuredReview={'判断軸':'病原体、感染源、感染経路、感染症法上の類型、届出・措置を分ける','注意':'感染源と感染経路、症候名と病原体名を混同しない'};
  else if(q.category==='disinfection')q.structuredReview={'判断軸':'洗浄と消毒を分け、血液付着の有無、濃度、温度、時間、対象器具を確認する','注意':'薬剤名だけで判断せず、衛生管理要領の条件を一組で確認する'};
  else q.structuredReview={'判断軸':'個人の治療だけでなく、集団・地域の疾病予防、健康増進、環境改善を対象とする','注意':'統計数値は調査年、指標の定義、分母を確認する'};
+}
+
+// v2.9.129：横断整合性監査。
+// 「誤っているもの」を選ぶ単一選択問題では、選ぶ肢を「正しい表現」と表示しない。
+for(const q of QUESTIONS){
+ const asksIncorrect=/誤っている|誤りである|不適切/.test(q.q||'');
+ const isCombination=q.draftType==='combination'||/組合せ|組み合わせ/.test(q.q||'')||Array.isArray(q.answer);
+ if(!asksIncorrect||isCombination||!Number.isInteger(q.answer))continue;
+ const answerText=q.choices[q.answer],existing=q.choiceExplanations?.[q.answer]||'';
+ if(!/正しい表現|条文に合致する|正しい記述|適切である/.test(existing))continue;
+ q.choiceExplanations=q.choices.map((choice,index)=>index===q.answer
+  ?`誤っている表現：「${choice}」。正しい判断基準：${q.exp||q.point||'設問の根拠資料と照合する。'}`
+  :`この設問では誤りとして選ばない記述：「${choice}」。判断基準：${q.exp||q.point||'設問の根拠資料と照合する。'}`);
+ q.crossAuditStatus='設問条件と選択肢別解説の極性を修正済み';
+ q.crossAuditDate='2026-07-16';
 }

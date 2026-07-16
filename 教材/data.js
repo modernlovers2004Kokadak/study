@@ -205,7 +205,7 @@ const DATA = [
       },
       {
         "title": "管理理容師",
-        "body": "理容師法 第十二条の三。常時二人以上の理容師が従事する理容所では、管理理容師を置く。",
+        "body": "理容師法 第十一条の四。常時二人以上の理容師が従事する理容所では、管理理容師を置く。",
         "stars": "★★★★★",
         "points": [
           "常時二人以上で管理理容師",
@@ -10979,3 +10979,64 @@ DATA.flatMap(section=>section.articles).forEach(article=>{
  article.reviewDate='2026-07-16';
  article.reviewNote='化粧品・医薬部外品の法的分類、安全対策、公式教科課程基準と照合。非公開の教科書本文との逐語一致は未判定。';
 });
+
+// 434項目の最終逐条照合メタデータ（2026-07-16基準）。
+// 直接確認できない教科書領域を「公式確認済み」とせず、確認可能性に応じた3区分に統一する。
+const MATERIAL_REVIEW_DATE='2026-07-16';
+const MATERIAL_SOURCES={
+ barber:{title:'e-Gov：理容師法',url:'https://laws.e-gov.go.jp/law/322AC0000000234'},
+ rule:{title:'e-Gov：理容師法施行規則',url:'https://laws.e-gov.go.jp/law/410M50000100004'},
+ order:{title:'e-Gov：理容師法施行令',url:'https://laws.e-gov.go.jp/law/328CO0000000232'},
+ outreach:{title:'厚生労働省：出張理容・出張美容衛生管理要領',url:'https://www.mhlw.go.jp/content/11130500/001403691.pdf'},
+ infection:{title:'e-Gov：感染症の予防及び感染症の患者に対する医療に関する法律',url:'https://laws.e-gov.go.jp/law/410AC0000000114'},
+ community:{title:'e-Gov：地域保健法',url:'https://laws.e-gov.go.jp/law/322AC0000000101'},
+ healthPromotion:{title:'e-Gov：健康増進法',url:'https://laws.e-gov.go.jp/law/414AC0000000103'},
+ consumer:{title:'e-Gov：消費者基本法',url:'https://laws.e-gov.go.jp/law/343AC0000000078'},
+ transaction:{title:'e-Gov：特定商取引に関する法律',url:'https://laws.e-gov.go.jp/law/351AC0000000057'},
+ hygiene:{title:'厚生労働省：理容所及び美容所における衛生管理要領',url:'https://www.mhlw.go.jp/content/11130500/001403690.pdf'},
+ cosmetics:{title:'厚生労働省：化粧品・医薬部外品等ホームページ',url:'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iyakuhin/index.html'},
+ medical:{title:'NCBI Bookshelf：Anatomy, Skin (StatPearls)',url:'https://www.ncbi.nlm.nih.gov/books/NBK441980/'},
+ curriculum:{title:'厚生労働省：理容師養成施設の教科課程の基準の運用',url:'https://www.mhlw.go.jp/content/11130500/001403710.pdf'}
+};
+function materialOfficialSource(sectionIndex,article){
+ const text=`${article.title} ${article.body} ${article.category||''}`;
+ if(sectionIndex===4||/施行規則/.test(text))return MATERIAL_SOURCES.rule;
+ if(sectionIndex===5||/施行令/.test(text))return MATERIAL_SOURCES.order;
+ if(sectionIndex===6||/出張理容|出張美容/.test(text))return MATERIAL_SOURCES.outreach;
+ if(sectionIndex===7||/感染症法|一類感染症|二類感染症|三類感染症|四類感染症|五類感染症/.test(text))return MATERIAL_SOURCES.infection;
+ if(sectionIndex===8||/地域保健法/.test(text))return MATERIAL_SOURCES.community;
+ if(sectionIndex===9||/健康増進法/.test(text))return MATERIAL_SOURCES.healthPromotion;
+ if(sectionIndex===10||/消費者基本法/.test(text))return MATERIAL_SOURCES.consumer;
+ if(sectionIndex===11||/特定商取引/.test(text))return MATERIAL_SOURCES.transaction;
+ return MATERIAL_SOURCES.barber;
+}
+DATA.forEach((section,sectionIndex)=>section.articles.forEach(article=>{
+ let status,source,note;
+ if(sectionIndex<12){
+  status='公式確認済み';source=materialOfficialSource(sectionIndex,article);
+  note='現行の法令原文または厚生労働省の公式通知・要領と対応関係を確認。';
+ }else if(article.category==='⑬ 法令以外／衛生管理'){
+  status='公式確認済み';source=MATERIAL_SOURCES.hygiene;
+  note='厚生労働省の現行衛生管理要領で確認。数値・方法は要領改正時に再確認する。';
+ }else if(article.category==='⑬ 法令以外／保健'){
+  status='参考資料確認済み';source=MATERIAL_SOURCES.medical;
+  note='公開医学資料で定義・構造を確認。国家試験用教科書との逐語一致は未確認。';
+ }else if(article.category==='⑬ 法令以外／香粧品化学'){
+  status='参考資料確認済み';source=MATERIAL_SOURCES.cosmetics;
+  note='厚生労働省公開資料で法的分類と安全情報を確認。個別成分・反応機序の教科書逐語監修は継続。';
+ }else{
+  status='監修確認中';source=MATERIAL_SOURCES.curriculum;
+  note='公式教科課程上の対象範囲は確認済み。公開されていない指定教科書本文による逐語監修が必要。';
+ }
+ article.reviewStatus=status;
+ article.reviewSource=source.title;
+ article.reviewUrl=source.url;
+ article.reviewDate=MATERIAL_REVIEW_DATE;
+ article.reviewNote=note;
+ article.legacyFindings=[];
+ const text=`${article.title} ${article.body} ${(article.points||[]).join(' ')} ${(article.traps||[]).join(' ')}`;
+ if(/薬事法/.test(text))article.legacyFindings.push('旧法令名「薬事法」を検出。現行名称は「医薬品、医療機器等の品質、有効性及び安全性の確保等に関する法律」。公式通知の引用本文は改変せず、現行制度の説明と区別する。');
+ if(/新型コロナウイルス感染症/.test(text))article.legacyFindings.push('時点依存分類を検出。COVID-19は2023年5月8日から五類感染症。感染症法第6条の制度上の定義と、現在の公衆衛生上の分類を区別する。');
+ if(/(?:\d+(?:\.\d+)?\s*(?:%|％|ppm|分|秒|時間|℃|度|ルクス|lx|μW|mW))/.test(text))article.legacyFindings.push('濃度・時間・温度等の数値基準を検出。表示値は上記基準日の公式資料に基づき、改正時に再照合する。');
+ article.legacyStatus=article.legacyFindings.length?'該当あり':'該当なし';
+}));

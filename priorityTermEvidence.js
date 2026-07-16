@@ -20,3 +20,5 @@ document.querySelectorAll('details.qa').forEach(detail=>{
  const box=document.createElement('div');box.className='priority-evidence';box.innerHTML=`${parts.join('<br>')}<br><small><a href="${url}" target="_blank" rel="noopener">${title}</a>／基準日 2026-07-16</small>`;answer.appendChild(box);
 });
 })();
+// 用語集本体の大規模HTMLを変更せず、追加監修データを読み込む。
+(()=>{const script=document.createElement('script');script.src='glossaryCompleteness.js';document.body.appendChild(script)})();
