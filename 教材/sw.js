@@ -1,5 +1,5 @@
 const CACHE_PREFIX="riyoushi-9laws-final-";
-const CACHE_NAME=CACHE_PREFIX+"v3-0-0";
+const CACHE_NAME=CACHE_PREFIX+"v3-0-0-r1";
 const ASSETS=["./","./index.html","./style.css?v=7","./script.js?v=7","./data.js?v=7","./manifest.json"];
 self.addEventListener("install",event=>{
   self.skipWaiting();

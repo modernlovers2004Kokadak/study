@@ -1,4 +1,4 @@
-const CACHE='riyo-kakomon-v300';
+const CACHE='riyo-kakomon-v300-r1';
 const CACHE_PREFIX='riyo-kakomon-';
 const ASSETS=['./','./index.html','./style.css','./data.js','./app.js','./manifest.webmanifest'];
 
