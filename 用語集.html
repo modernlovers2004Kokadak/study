@@ -18,10 +18,34 @@
 .status-message{position:fixed;z-index:60;left:50%;bottom:24px;transform:translateX(-50%);display:flex;align-items:center;gap:14px;width:min(520px,calc(100% - 28px));padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:0 12px 30px rgba(16,35,63,.18);font-size:14px}
 .status-message span{flex:1}.status-message button{width:36px;height:36px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--text);font:inherit;font-size:20px}
 </style>
+<style>
+.status-bookmark{display:block;height:18px;margin:0 auto 7px;font-size:18px;line-height:18px}
+@media(max-width:440px){.summary-main{font-size:19px;line-height:1.4}.status-bookmark{font-size:17px}}
+</style>
+<style>
+.g-nav .g-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:18px}
+.list-tools{grid-template-columns:1fr}
+.list-tools button{width:100%;min-height:44px;padding:0 12px}
+.category-item{border-bottom:1px solid #e5ebf3}
+.category-item:last-child{border-bottom:0}
+.category-item>.category-row{border-bottom:0}
+.category-panel{padding:12px;background:var(--pale);border-top:1px solid #e5ebf3}
+.category-panel .summary-card,.category-panel .status-box,.category-panel .term-card{background:#fff}
+.category-panel .progress-line{margin-bottom:16px}
+.category-panel .list-tools{margin:0 0 10px}
+.category-row .go{font-size:15px;text-align:center}
+.floating-nav{position:fixed;left:calc(14px + env(safe-area-inset-left));bottom:calc(82px + env(safe-area-inset-bottom));z-index:9999;display:grid;gap:8px}
+.floating-nav .floating-home,.floating-nav .floating-back{position:static;display:flex;align-items:center;justify-content:center;gap:5px;width:68px;height:44px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.96);box-shadow:0 4px 14px rgba(16,35,63,.14);color:var(--navy);text-decoration:none;font:inherit;font-size:24px;line-height:1;cursor:pointer}
+.floating-nav .home-label{font-size:11px;line-height:1}
+.floating-nav .floating-home:focus-visible,.floating-nav .floating-back:focus-visible{outline:3px solid rgba(52,119,212,.35);outline-offset:2px}
+.floating-nav [hidden]{display:none!important}.mode-grid .mode-button:last-child:nth-child(odd){grid-column:1/-1}
+@media(max-width:440px){.g-nav .g-title{font-size:16px}.floating-nav{left:calc(10px + env(safe-area-inset-left));bottom:calc(78px + env(safe-area-inset-bottom))}.floating-nav .floating-home,.floating-nav .floating-back{width:44px}.floating-nav .home-label{display:none}}
+</style>
 </head>
 <body>
-<nav class="g-nav"><a href="index.html" aria-label="戻る">‹</a><span>用語集</span><a href="index.html" aria-label="ホーム">⌂</a></nav>
+<nav class="g-nav"><span aria-hidden="true"></span><span class="g-title">理容師国家試験 用語集</span><span aria-hidden="true"></span></nav>
 <main class="page" id="app"></main>
+<div class="floating-nav"><button id="glossaryBack" class="floating-back" type="button" onclick="Glossary.back()" aria-label="戻る">‹</button><a class="floating-home" href="index.html" aria-label="ホームへ戻る">⌂</a></div>
 <script src="glossaryData.js"></script>
 <script src="glossaryLearningData.js"></script>
 <script src="glossaryQuizData.js"></script>

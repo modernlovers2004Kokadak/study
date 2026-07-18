@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>理容師国家試験 過去問題集</title>
+<title>理容師国家試験 問題集</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="style.css?v=2971">
 </head>
@@ -14,6 +14,6 @@
 <script>
 if ('serviceWorker' in navigator) { window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{})); }
 </script>
-<div class="floating-nav"><button class="floating-back" type="button" onclick="history.back()" aria-label="戻る">‹<span class="home-label">戻る</span></button><a class="floating-home" href="../index.html" aria-label="ホームへ戻る">⌂<span class="home-label">ホーム</span></a></div>
+<div class="floating-nav"><button id="problemBack" class="floating-back" type="button" onclick="appBack()" aria-label="戻る">‹</button><a class="floating-home" href="../index.html" aria-label="ホームへ戻る">⌂</a></div>
 </body>
 </html>

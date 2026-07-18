@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>国家試験</title>
+<title>理容師国家試験 教材</title>
 <meta name="theme-color" content="#07356f">
 <meta name="apple-mobile-web-app-title" content="国家試験">
 <meta name="application-name" content="国家試験">
@@ -13,7 +13,7 @@
 <body>
 <header class="app-header">
   <div class="header-inner">
-    <h1>理容師国家試験対策</h1>
+    <h1>理容師国家試験 教材</h1>
     <button id="searchBtn" class="icon-btn" aria-label="検索">🔍</button>
   </div>
   <div class="search-bar" id="searchBar">
@@ -25,7 +25,7 @@
   <section id="home" class="screen active">
 
     <section class="home-section">
-      <h2>教材一覧</h2>
+      <h2>教材一覧</h2><p id="materialCountDescription" class="legend">434項目</p>
       <div id="lawList" class="law-list"></div>
     </section>
 
@@ -33,7 +33,7 @@
 
   <section id="lawScreen" class="screen">
     <div class="screen-title">
-      <button class="back" id="backHome">‹</button>
+      <span aria-hidden="true"></span>
       <h2 id="lawTitle"></h2>
     </div>
     <p class="legend"><span><i class="rank-dot dot-red"></i>最重要</span>　<span><i class="rank-dot" style="background:#ff5fa2"></i>重要</span>　<span><i class="rank-dot" style="background:#ffd400"></i>頻出</span>　<span><i class="rank-dot dot-gray"></i>基本</span></p>
@@ -43,7 +43,7 @@
 
   <section id="searchScreen" class="screen">
     <div class="screen-title">
-      <button class="back" id="backSearchHome">‹</button>
+      <span aria-hidden="true"></span>
       <h2>検索結果</h2>
     </div>
     <div id="searchResults"></div>
@@ -52,7 +52,7 @@
 
 <section id="detail" class="detail hidden">
   <div class="detail-header">
-    <button id="closeDetail">‹</button>
+    <span aria-hidden="true"></span>
     <h2 id="detailTitle"></h2>
   </div>
   <article class="article-card">
@@ -260,6 +260,6 @@
   openMaterialFromHash();
 })();
 </script>
-<div class="floating-nav"><button class="floating-back" type="button" onclick="history.back()" aria-label="戻る">‹<span class="home-label">戻る</span></button><a class="floating-home" href="../index.html" aria-label="ホームへ戻る">⌂<span class="home-label">ホーム</span></a></div>
+<div class="floating-nav"><button id="materialBack" class="floating-back" type="button" onclick="materialBack()" aria-label="戻る">‹</button><a class="floating-home" href="../index.html" aria-label="ホームへ戻る">⌂</a></div>
 </body>
 </html>

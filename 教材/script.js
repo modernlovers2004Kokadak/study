@@ -2,7 +2,7 @@ function storageGet(key){try{return localStorage.getItem(key)}catch(e){return nu
 function storageSet(key,value){try{localStorage.setItem(key,value);return true}catch(e){return false}}
 function safeJson(key,fallback,validate){const raw=storageGet(key);if(raw===null)return fallback;try{const value=JSON.parse(raw);return !validate||validate(value)?value:fallback}catch(e){return fallback}}
 function localDateString(d=new Date()){const z=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`}
-let currentLaw=0,currentArticle=0,mode=storageGet("study_mode")||"all";
+let currentLaw=0,currentArticle=0,mode=storageGet("study_mode")||"all",currentScreen='home',detailReturnScreen='home';
 const DONE_KEY="riyoushi_9laws_final_done_v3";
 const WEAK_KEY="riyoushi_9laws_final_weak_v2";
 const BOOKMARK_KEY="riyoushi_9laws_final_bookmark_v1";
@@ -73,7 +73,9 @@ function openFromHash(){
 }
 
 
-function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");window.scrollTo({top:0,behavior:"smooth"});}
+function updateMaterialNav(){const back=document.getElementById('materialBack'),detailOpen=!document.getElementById('detail')?.classList.contains('hidden'),nav=back?.closest('.floating-nav');if(back)back.hidden=currentScreen==='home'&&!detailOpen;if(nav)nav.classList.toggle('with-article-nav',detailOpen)}
+function show(id){currentScreen=id;document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");updateMaterialNav();window.scrollTo({top:0,behavior:"smooth"});}
+function materialBack(){const detail=document.getElementById('detail');if(detail&&!detail.classList.contains('hidden')){detail.classList.add('hidden');currentScreen=detailReturnScreen;updateMaterialNav();return}if(currentScreen!=='home')show('home')}
 function save(){storageSet(DONE_KEY,JSON.stringify([...done]));storageSet(WEAK_KEY,JSON.stringify([...weak]));storageSet(BOOKMARK_KEY,JSON.stringify([...bookmarks]));renderHome();renderArticles();}
 function isDone(li,ai){return done.has(`${li}-${ai}`);} function isWeak(li,ai){return weak.has(`${li}-${ai}`);} function isBookmarked(li,ai){return bookmarks.has(`${li}-${ai}`);}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
@@ -170,6 +172,7 @@ function renderFilteredList(title,predicate){const box=document.getElementById("
   else{openDetail(x.law,x.article)}
 });list.appendChild(row)});box.appendChild(list);bindActionButtons(box);}show("searchScreen");}
 function openDetail(li,ai){
+ detailReturnScreen=currentScreen;
  currentLaw=li;currentArticle=ai;const law=DATA[li],a=law.articles[ai];document.getElementById("detailLaw").textContent=law.name+"　"+(a.category||"");document.getElementById("detailTitle").textContent=a.title;document.getElementById("detailStars").innerHTML=rankBadge(a.importance||a.stars);const review=a.reviewStatus?`<aside class="source-note"><strong>照合状態：${escapeHtml(a.reviewStatus)}</strong><br><a href="${escapeHtml(a.reviewUrl)}" target="_blank" rel="noopener">${escapeHtml(a.reviewSource)}</a><br>基準日：${escapeHtml(a.reviewDate)}<br>${escapeHtml(a.reviewNote||'')}</aside>`:'';const legacy=(a.legacyFindings||[]).length?`<aside class="source-note"><strong>旧法令・分類・数値の確認</strong><ul>${a.legacyFindings.map(item=>`<li>${escapeHtml(item)}</li>`).join('')}</ul></aside>`:'';document.getElementById("detailBody").innerHTML=bodyHtml(a.body,a.terms||[])+review+legacy;
  let ul=document.getElementById("detailPoints");ul.innerHTML="";(a.points||[]).forEach(p=>{const item=document.createElement("li");item.innerHTML=highlight(p,a.terms||[]);ul.appendChild(item)});
  ul=document.getElementById("detailTraps");ul.innerHTML="";(a.traps||[]).forEach(p=>{const item=document.createElement("li");item.innerHTML=highlight(p,a.terms||[]);ul.appendChild(item)});
@@ -190,16 +193,16 @@ function openDetail(li,ai){
 }); if(!(a.related||[]).length)rel.textContent="関連法令なし";
  const qcta=document.getElementById('detailQuizCta');
  if(qcta){qcta.innerHTML=quizCtaHtml(li,a,'問題');}
- applyMode();document.getElementById("detail").classList.remove("hidden");
+ applyMode();document.getElementById("detail").classList.remove("hidden");updateMaterialNav();
 }
-document.getElementById("closeDetail").addEventListener("click",()=>document.getElementById("detail").classList.add("hidden"));
 document.getElementById("prevBtn").addEventListener("click",()=>{const idx=flat.findIndex(x=>x.law===currentLaw&&x.article===currentArticle);if(idx>0){const n=flat[idx-1];openDetail(n.law,n.article)}});
 document.getElementById("nextBtn").addEventListener("click",()=>{const idx=flat.findIndex(x=>x.law===currentLaw&&x.article===currentArticle);if(idx<flat.length-1){const n=flat[idx+1];openDetail(n.law,n.article)}});
-document.getElementById("backHome").addEventListener("click",()=>show("home"));document.getElementById("backSearchHome").addEventListener("click",()=>{const h=document.querySelector("#searchScreen h2");if(h)h.textContent="検索結果";show("home")});
 document.getElementById("searchBtn").addEventListener("click",()=>document.getElementById("searchBar").classList.toggle("open"));
 function renderSearch(q){const box=document.getElementById("searchResults");box.innerHTML="";const h=document.querySelector("#searchScreen h2");if(h)h.textContent="検索結果";if(!q){show("home");return}const groups={};flat.filter(x=>(DATA[x.law].name+x.item.title+x.item.body+x.item.points.join("")+(x.item.traps||[]).join("")+(x.item.terms||[]).join("")).includes(q)).forEach(x=>{const cat=x.item.category||"その他";(groups[cat]||(groups[cat]=[])).push(x)});Object.keys(groups).forEach(cat=>{const h=document.createElement("h3");h.className="cat-title";h.textContent=cat+"（"+groups[cat].length+"）";box.appendChild(h);const list=document.createElement("div");list.className="cat-list";groups[cat].forEach(x=>{const row=document.createElement("div");row.className="article-row";row.innerHTML=`<span class="article-title">${DATA[x.law].name}　${x.item.title}</span><span class="stars">${rankBadge(x.item.importance||x.item.stars)} ›</span>${actionButtons(x.law,x.article)}`;row.addEventListener("click",()=>openDetail(x.law,x.article));list.appendChild(row)});box.appendChild(list);bindActionButtons(list)});show("searchScreen");}
 document.getElementById("searchInput").addEventListener("input",e=>renderSearch(e.target.value.trim()));
 
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 renderHome();
+document.getElementById('materialCountDescription').textContent=flat.length+'項目';updateMaterialNav();
+document.addEventListener('DOMContentLoaded',updateMaterialNav);
 openFromHash();
